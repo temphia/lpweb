@@ -18,6 +18,8 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
+const Protocol = "/temphia_p2p/1.0.0"
+
 var (
 	BootStrapPeers = []string{
 		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
@@ -29,12 +31,12 @@ var (
 	}
 )
 
-func NewHost(keystr string) (host.Host, *dht.IpfsDHT, error) {
+func NewHost(keystr string, port int) (host.Host, *dht.IpfsDHT, error) {
 	privateKey, _, err := crypto.GenerateKeyPairWithReader(1, 2048, bytes.NewReader([]byte(keystr)))
 	if err != nil {
 		panic(err)
 	}
-	return NewHostWithKey(privateKey, 0)
+	return NewHostWithKey(privateKey, port)
 }
 
 func NewHostWithKey(privateKey crypto.PrivKey, port int) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
