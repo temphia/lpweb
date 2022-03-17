@@ -1,9 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"github.com/temphia/temphia_relay/p2p"
+)
 
 func main() {
-
-	fmt.Println("Hello Universe!!")
-
+	instance := p2p.NewInstance()
+	instance.Run()
 }
