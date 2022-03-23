@@ -6,8 +6,10 @@ import (
 	"context"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -20,6 +22,8 @@ import (
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/temphia/temphia_relay/core"
+
+	"github.com/inconshreveable/go-vhost"
 )
 
 type Instance struct {
@@ -27,9 +31,13 @@ type Instance struct {
 	dhtOut      *dht.IpfsDHT
 	exitServers map[string]*ExitServer
 	mlock       sync.Mutex
+
+	proxy *goproxy.ProxyHttpServer
 }
 
 func NewInstance() *Instance {
+
+	proxy := goproxy.NewProxyHttpServer()
 
 	log.Println("creating instance...")
 
@@ -47,7 +55,7 @@ func NewInstance() *Instance {
 		log.Println("httpd@", m.String())
 	}
 
-	a, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/8083/p2p/12D3KooWC8Vr1LMXape8KDVWikJ5YTehorc1BTSeN1htwvUgEsUC")
+	a, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/8083/p2p/12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE")
 	if err != nil {
 		panic(err)
 	}
@@ -61,6 +69,8 @@ func NewInstance() *Instance {
 		localNode:   h,
 		dhtOut:      dth,
 		exitServers: map[string]*ExitServer{},
+		mlock:       sync.Mutex{},
+		proxy:       proxy,
 	}
 
 	return instance
@@ -69,13 +79,15 @@ func NewInstance() *Instance {
 var r = regexp.MustCompile(`\.temphiap2p`)
 
 func (i *Instance) Run() {
-	proxy := goproxy.NewProxyHttpServer()
-	proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(i.proxied)
-	proxy.Verbose = true
+
+	i.proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(i.proxied)
+	i.proxy.Verbose = true
 
 	log.Println("running p2p instance...")
 
-	log.Fatal(http.ListenAndServe(":8080", proxy))
+	go i.ListenTLS()
+
+	log.Fatal(http.ListenAndServe(":8080", i.proxy))
 
 }
 
@@ -134,7 +146,7 @@ func (i *Instance) getExitNode(target string) *ExitServer {
 }
 
 func (i *Instance) ensureConn(target string) (*peer.AddrInfo, error) {
-	a, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/8083/p2p/12D3KooWC8Vr1LMXape8KDVWikJ5YTehorc1BTSeN1htwvUgEsUC")
+	a, err := peer.AddrInfoFromString("/ip4/127.0.0.1/tcp/8083/p2p/12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE")
 	return a, err
 
 	//return i.nodeAddrs(target)
@@ -183,4 +195,41 @@ func (i *Instance) debugLoop() {
 
 		pp.Println("#################")
 	}
+}
+
+func (i *Instance) ListenTLS() {
+	ln, err := net.Listen("tcp", "localhost:8043")
+	if err != nil {
+		log.Fatalf("Error listening for https connections - %v", err)
+	}
+	for {
+		c, err := ln.Accept()
+		if err != nil {
+			log.Printf("Error accepting new connection - %v", err)
+			continue
+		}
+		go func(c net.Conn) {
+			tlsConn, err := vhost.TLS(c)
+			if err != nil {
+				log.Printf("Error accepting new connection - %v", err)
+			}
+			if tlsConn.Host() == "" {
+				log.Printf("Cannot support non-SNI enabled clients")
+				return
+			}
+			connectReq := &http.Request{
+				Method: "CONNECT",
+				URL: &url.URL{
+					Opaque: tlsConn.Host(),
+					Host:   net.JoinHostPort(tlsConn.Host(), "443"),
+				},
+				Host:       tlsConn.Host(),
+				Header:     make(http.Header),
+				RemoteAddr: c.RemoteAddr().String(),
+			}
+			resp := dumbResponseWriter{tlsConn}
+			i.proxy.ServeHTTP(resp, connectReq)
+		}(c)
+	}
+
 }

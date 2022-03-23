@@ -10,7 +10,6 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
@@ -18,15 +17,23 @@ import (
 	"github.com/temphia/temphia_relay/core"
 )
 
-type Httpd struct {
-	host host.Host
-	mux  *http.ServeMux
-	dht  *dht.IpfsDHT
+type MeshOptions struct {
+	HttpPort   int
+	MeshKey    string
+	MeshPort   int
+	debugPrint bool
 }
 
-func New() *Httpd {
+type Libp2pMesh struct {
+	host   host.Host
+	dht    *dht.IpfsDHT
+	target string
+	closed bool
+}
 
-	h, dht, err := core.NewHost("ye2uih109ikdgu1ibkj`1l;.,s;gu2e1j[p21je;l1u2k ei2bj1", 8083)
+func New(opts MeshOptions) *Libp2pMesh {
+
+	h, dht, err := core.NewHost(opts.MeshKey, opts.MeshPort)
 	if err != nil {
 		panic(err)
 	}
@@ -37,32 +44,20 @@ func New() *Httpd {
 		log.Println("httpd@", m.String())
 	}
 
-	return &Httpd{
-		dht:  dht,
-		mux:  nil,
-		host: h,
+	mesh := &Libp2pMesh{
+		dht:    dht,
+		host:   h,
+		target: "localhost",
 	}
+
+	h.SetStreamHandler(core.Protocol, mesh.streamHandler)
+
+	log.Println("Serving mesh @", fmt.Sprintf("http://%s.temphiap2p", h.ID()))
+
+	return mesh
 }
 
-func (h *Httpd) Run() {
-
-	h.host.SetStreamHandler(core.Protocol, h.streamHandler)
-
-	go h.debugLoop()
-
-	h.mux = http.NewServeMux()
-	h.mux.HandleFunc("/", h.Handle)
-
-	log.Println("Starting httpd")
-
-	fmt.Println(http.ListenAndServe(":3333", h.mux))
-}
-
-func (h *Httpd) Handle(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello universe!!!!!!"))
-}
-
-func (h *Httpd) streamHandler(stream network.Stream) {
+func (l *Libp2pMesh) streamHandler(stream network.Stream) {
 	defer stream.Close()
 
 	req, err := http.ReadRequest(bufio.NewReader(stream))
@@ -70,7 +65,7 @@ func (h *Httpd) streamHandler(stream network.Stream) {
 		panic(err)
 	}
 
-	req.URL.Host = "localhost:3333"
+	req.URL.Host = "localhost:4000"
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		panic(err)
@@ -85,26 +80,29 @@ func (h *Httpd) streamHandler(stream network.Stream) {
 	io.Copy(stream, buf)
 }
 
-func (h *Httpd) GetAddr() []multiaddr.Multiaddr {
+func (h *Libp2pMesh) GetAddr() []multiaddr.Multiaddr {
 	return h.host.Addrs()
 }
 
-const relay = "12D3KooWAAs35ppLtXZyc24KCdio3z3J3VymAwndoQwWn5e6wmoX"
-
-func (h *Httpd) debugLoop() {
+func (l *Libp2pMesh) debugLoop() {
 	for {
 
-		peers := h.host.Network().Peers()
-
-		for _, peer := range peers {
-			if relay == peer.Pretty() {
-				pp.Println("Connected =>", relay)
-			}
-
+		if l.closed {
+			return
 		}
 
-		time.Sleep(time.Second * 5)
+		peers := l.host.Network().Peers()
+		log.Println("connected nodes:", len(peers))
+		for _, peer := range peers {
+			log.Println(peer.Pretty())
+		}
 
-		pp.Println("#################")
+		time.Sleep(time.Second * 10)
+
 	}
+}
+
+func (l *Libp2pMesh) Close() error {
+	l.closed = true
+	return l.host.Close()
 }
