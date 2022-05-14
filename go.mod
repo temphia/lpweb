@@ -1,4 +1,4 @@
-module github.com/temphia/temphia_relay
+module github.com/temphia/lpweb
 
 go 1.16
 

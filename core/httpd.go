@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"bufio"
@@ -14,7 +14,6 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/multiformats/go-multiaddr"
-	"github.com/temphia/temphia_relay/core"
 )
 
 type MeshOptions struct {
@@ -33,7 +32,7 @@ type Libp2pMesh struct {
 
 func New(opts MeshOptions) *Libp2pMesh {
 
-	h, dht, err := core.NewHost(opts.MeshKey, opts.MeshPort)
+	h, dht, err := NewHost(opts.MeshKey, opts.MeshPort)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +49,7 @@ func New(opts MeshOptions) *Libp2pMesh {
 		target: "localhost",
 	}
 
-	h.SetStreamHandler(core.Protocol, mesh.streamHandler)
+	h.SetStreamHandler(Protocol, mesh.streamHandler)
 
 	log.Println("Serving mesh @", fmt.Sprintf("http://%s.temphiap2p", h.ID()))
 

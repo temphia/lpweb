@@ -1,4 +1,4 @@
-package p2p
+package exitserver
 
 import (
 	"bufio"
@@ -21,7 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/temphia/temphia_relay/core"
+	"github.com/temphia/lpweb/core"
 
 	"github.com/inconshreveable/go-vhost"
 )
