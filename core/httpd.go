@@ -20,7 +20,7 @@ type MeshOptions struct {
 	HttpPort   int
 	MeshKey    string
 	MeshPort   int
-	debugPrint bool
+	DebugPrint bool
 }
 
 type Libp2pMesh struct {
@@ -83,7 +83,7 @@ func (h *Libp2pMesh) GetAddr() []multiaddr.Multiaddr {
 	return h.host.Addrs()
 }
 
-func (l *Libp2pMesh) debugLoop() {
+func (l *Libp2pMesh) DebugLoop() {
 	for {
 
 		if l.closed {

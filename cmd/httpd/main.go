@@ -1,13 +1,15 @@
 package main
 
+import "github.com/temphia/lpweb/core"
+
 func main() {
-	mesh := New(MeshOptions{
-		debugPrint: true,
+	mesh := core.New(core.MeshOptions{
+		DebugPrint: true,
 		HttpPort:   4000,
 		MeshKey:    "aaaaaasaudiwhjduibquqbwwdinlkwqdhq wuqwbd dvwuqhd qowbdjlinkl",
 		MeshPort:   8083,
 	})
 
-	mesh.debugLoop()
+	mesh.DebugLoop()
 
 }
