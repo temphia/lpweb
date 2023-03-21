@@ -21,7 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/libp2p/go-libp2p-core/peer"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/temphia/lpweb/core"
+	"github.com/temphia/lpweb/code/core"
 
 	"github.com/inconshreveable/go-vhost"
 )

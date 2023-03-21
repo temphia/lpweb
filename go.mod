@@ -3,6 +3,7 @@ module github.com/temphia/lpweb
 go 1.16
 
 require (
+	github.com/alecthomas/kong v0.7.1
 	github.com/elazarl/goproxy v0.0.0-20220115173737-adb46da277ac
 	github.com/inconshreveable/go-vhost v0.0.0-20160627193104-06d84117953b
 	github.com/ipfs/go-datastore v0.5.0

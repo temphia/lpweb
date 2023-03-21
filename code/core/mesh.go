@@ -17,7 +17,6 @@ import (
 )
 
 type MeshOptions struct {
-	HttpPort   int
 	MeshKey    string
 	MeshPort   int
 	DebugPrint bool

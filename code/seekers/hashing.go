@@ -1,9 +1,14 @@
 package seekers
 
+import (
+	"os"
+)
+
 var salt = "salty1"
 
 func init() {
-	_salt := os.GetEnv("LPWEB_SALT")
+
+	_salt := os.Getenv("LPWEB_SALT")
 	if _salt != "" {
 		salt = _salt
 	}

@@ -21,6 +21,13 @@ func RunCLI() {
 	cli := &CLI{}
 	ctx := kong.Parse(cli)
 
-	ctx.Run(nil)
+	switch ctx.Command() {
+	case "proxy":
+		pp.Println("@proxy")
+	case "tunnel":
+		pp.Println("@tunnel")
+	default:
+		panic("Not implemented" + ctx.Command())
+	}
 
 }
