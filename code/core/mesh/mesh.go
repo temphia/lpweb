@@ -1,11 +1,13 @@
-package core
+package mesh
 
 import (
 	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"sync"
 
 	"github.com/ipfs/go-datastore"
@@ -35,31 +37,56 @@ var (
 	}
 )
 
-func NewHost(keystr string, port int) (host.Host, *dht.IpfsDHT, error) {
+type Mesh struct {
+	Host     host.Host
+	DHT      *dht.IpfsDHT
+	Port     int
+	PublicIp string
+}
+
+func New(keystr string, port int) (*Mesh, error) {
 	privateKey, _, err := crypto.GenerateKeyPairWithReader(1, 2048, bytes.NewReader([]byte(keystr)))
 	if err != nil {
 		panic(err)
 	}
-	return NewHostWithKey(privateKey, port)
-}
-
-func NewHostWithKey(privateKey crypto.PrivKey, port int) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
-	ctx := context.Background()
 
 	if port == 0 {
 		port, err = getFreePort()
 		if err != nil {
 			panic(err)
 		}
-
 	}
 
-	ip6tcp := fmt.Sprintf("/ip6/::/tcp/%d", port)
-	ip4tcp := fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port)
+	baseAddrs := []string{
+		fmt.Sprintf("/ip6/::/tcp/%d", port),
+		fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port),
+	}
+
+	pubIp, err := findPublicIpAddr()
+	if err != nil {
+		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
+	}
+
+	host, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Mesh{
+		Host:     host,
+		DHT:      dh,
+		Port:     port,
+		PublicIp: pubIp,
+	}, nil
+
+}
+
+func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
+	ctx := context.Background()
 
 	// Create libp2p node
 	node, err = libp2p.New(
-		libp2p.ListenAddrStrings(ip6tcp, ip4tcp),
+		libp2p.ListenAddrStrings(baseAddrs...),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
@@ -132,4 +159,18 @@ func getFreePort() (int, error) {
 	}
 	defer l.Close()
 	return l.Addr().(*net.TCPAddr).Port, nil
+}
+
+func findPublicIpAddr() (string, error) {
+	resp, err := http.Get("https://api.ipify.org/")
+	if err != nil {
+		return "", err
+	}
+
+	out, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(out), err
 }

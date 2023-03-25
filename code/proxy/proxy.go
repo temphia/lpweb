@@ -10,8 +10,7 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/libp2p/go-libp2p/core/host"
 
-	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/temphia/lpweb/code/core"
+	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/seekers"
 	"github.com/temphia/lpweb/code/seekers/etcd"
 )
@@ -19,8 +18,8 @@ import (
 var r = regexp.MustCompile(`\.lpweb`)
 
 type WebProxy struct {
+	mesh      *mesh.Mesh
 	localNode host.Host
-	dhtOut    *dht.IpfsDHT
 	proxy     *goproxy.ProxyHttpServer
 	seekers   []seekers.Seeker
 
@@ -34,24 +33,25 @@ func NewWebProxy(port int) *WebProxy {
 
 	proxy := goproxy.NewProxyHttpServer()
 
-	h, dth, err := core.NewHost(proxyKey, 0)
+	m, err := mesh.New(proxyKey, 0)
 	if err != nil {
 		panic(err)
 	}
 
-	h.SetStreamHandler(core.Protocol, deny)
+	m.Host.SetStreamHandler(mesh.Protocol, deny)
 
-	log.Println("p2p_relay@", h.ID())
-	for _, m := range h.Addrs() {
+	log.Println("p2p_relay@", m.Host.ID())
+	for _, m := range m.Host.Addrs() {
 		log.Println("httpd@", m.String())
 	}
 
 	seeker := etcd.New()
 
 	instance := &WebProxy{
-		localNode:  h,
-		dhtOut:     dth,
+		mesh:       m,
+		localNode:  m.Host,
 		proxy:      proxy,
+		proxyPort:  port,
 		upNodes:    make(map[string]*UpNode),
 		upnodeLock: sync.Mutex{},
 

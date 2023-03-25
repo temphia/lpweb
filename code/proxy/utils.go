@@ -24,6 +24,6 @@ func (wp *WebProxy) nodeAddrs(target string) (*peer.AddrInfo, error) {
 
 	pp.Println(id.Validate())
 
-	addr, err := wp.dhtOut.FindPeer(context.TODO(), id)
+	addr, err := wp.mesh.DHT.FindPeer(context.TODO(), id)
 	return &addr, err
 }

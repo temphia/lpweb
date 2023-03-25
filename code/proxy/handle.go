@@ -14,7 +14,7 @@ import (
 
 	"github.com/elazarl/goproxy"
 	"github.com/inconshreveable/go-vhost"
-	"github.com/temphia/lpweb/code/core"
+	"github.com/temphia/lpweb/code/core/mesh"
 )
 
 func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
@@ -23,7 +23,7 @@ func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Reques
 
 	enode := wp.getExitNode(host)
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, core.Protocol)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.Protocol)
 	if err != nil {
 		panic(err)
 	}
