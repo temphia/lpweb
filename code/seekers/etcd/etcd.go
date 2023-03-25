@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/k0kubun/pp"
+	"github.com/tidwall/pretty"
 )
 
 var uuid = "f116f98c258214878c4a1fa08563efbf"
@@ -38,7 +39,11 @@ func (p *PubEtcd) Set(hash, addr string) error {
 
 	ev := vals.Encode()
 
-	req, err := http.NewRequest(http.MethodPut, urlkey(hash, p.baseURL), strings.NewReader(ev))
+	url := urlkey(hash, p.baseURL)
+
+	pp.Println("@pulishing_discovery", url)
+
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(ev))
 	if err != nil {
 		return err
 	}
@@ -55,13 +60,18 @@ func (p *PubEtcd) Set(hash, addr string) error {
 		return err
 	}
 
-	pp.Println("@resp", string(out))
+	fmt.Print("@resp", string((pretty.Color(pretty.Pretty(out), nil))))
+	fmt.Print("\n")
 
 	return nil
 }
 
 func (p *PubEtcd) Get(hash string) (string, error) {
-	resp, err := http.DefaultClient.Get(urlkey(hash, p.baseURL))
+	url := urlkey(hash, p.baseURL)
+
+	pp.Println("@getting_discovery", url)
+
+	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return "", err
 	}
@@ -75,5 +85,5 @@ func (p *PubEtcd) Get(hash string) (string, error) {
 }
 
 func urlkey(hash, url string) string {
-	return fmt.Sprintf("%s-%s/servers", hash, url)
+	return fmt.Sprintf("%s/%s-servers", url, hash)
 }

@@ -38,6 +38,10 @@ func RunCLI() {
 
 func (c *CLI) runWebProxy() {
 	pp.Println("@start webproxy")
+	if c.WebProxy.port == 0 {
+		c.WebProxy.port = 8080
+	}
+
 	wproxy := proxy.NewWebProxy(c.WebProxy.port)
 
 	pp.Println("@run", wproxy.Run())

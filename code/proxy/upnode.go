@@ -55,7 +55,7 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 	return enode
 }
 
-// consvert pubkeyhash like 12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE to sth actual connectable
+// convert pubkeyhash like 12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE to actual connectable
 // address /ip4/127.0.0.1/tcp/8083/p2p/12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE like this and connect
 func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	pid, err := peer.IDFromBytes([]byte(target))
