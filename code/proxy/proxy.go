@@ -1,20 +1,70 @@
 package proxy
 
-import "github.com/temphia/lpweb/code/core"
+import (
+	"log"
+	"net/http"
+	"regexp"
+	"sync"
 
-type Proxy struct {
-	mesh *core.Libp2pMesh
+	"github.com/elazarl/goproxy"
+	"github.com/libp2p/go-libp2p-core/host"
+
+	dht "github.com/libp2p/go-libp2p-kad-dht"
+	"github.com/temphia/lpweb/code/core"
+	"github.com/temphia/lpweb/code/seekers"
+	"github.com/temphia/lpweb/code/seekers/etcd"
+)
+
+var r = regexp.MustCompile(`\.lpweb`)
+
+type WebProxy struct {
+	localNode host.Host
+	dhtOut    *dht.IpfsDHT
+	proxy     *goproxy.ProxyHttpServer
+	seekers   []seekers.Seeker
+
+	upNodes    map[string]*UpNode
+	upnodeLock sync.Mutex
 }
 
-func New() *Proxy {
+func NewWebProxy(port int) *WebProxy {
 
-	mesh := core.New(core.MeshOptions{
-		MeshKey:    "",
-		MeshPort:   0,
-		DebugPrint: true,
-	})
+	proxy := goproxy.NewProxyHttpServer()
 
-	return &Proxy{
-		mesh: mesh,
+	h, dth, err := core.NewHost(proxyKey, 0)
+	if err != nil {
+		panic(err)
 	}
+
+	h.SetStreamHandler(core.Protocol, deny)
+
+	log.Println("p2p_relay@", h.ID())
+	for _, m := range h.Addrs() {
+		log.Println("httpd@", m.String())
+	}
+
+	seeker := etcd.New()
+
+	instance := &WebProxy{
+		localNode:  h,
+		dhtOut:     dth,
+		proxy:      proxy,
+		upNodes:    make(map[string]*UpNode),
+		upnodeLock: sync.Mutex{},
+
+		seekers: []seekers.Seeker{
+			seeker,
+		},
+	}
+
+	return instance
+}
+
+func (wp *WebProxy) Run() {
+
+	wp.proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(wp.handle)
+	wp.proxy.Verbose = true
+
+	log.Println("listening proxy")
+	log.Fatal(http.ListenAndServe(":8080", wp.proxy))
 }
