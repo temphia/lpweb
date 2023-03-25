@@ -8,8 +8,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/temphia/lpweb/code/core/mesh"
-	"github.com/temphia/lpweb/code/seekers"
-	"github.com/temphia/lpweb/code/seekers/etcd"
+	"github.com/temphia/lpweb/code/core/seekers"
+	"github.com/temphia/lpweb/code/core/seekers/etcd"
 )
 
 type HttpTunnel struct {
