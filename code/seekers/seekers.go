@@ -1,4 +1,4 @@
-package core
+package seekers
 
 type Seeker interface {
 	Set(hash, addr string) error

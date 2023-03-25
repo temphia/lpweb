@@ -1,4 +1,4 @@
-package seekers
+package core
 
 import (
 	"os"

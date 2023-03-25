@@ -1,7 +1,9 @@
 package tunnel
 
-import "github.com/temphia/lpweb/code/core"
+import (
+	"github.com/temphia/lpweb/code/seekers"
+)
 
 type Tunnel struct {
-	seekers []core.Seeker
+	seekers []seekers.Seeker
 }
