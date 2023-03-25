@@ -1,9 +1,11 @@
 package tunnel
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
+	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/temphia/lpweb/code/core/config"
@@ -42,6 +44,9 @@ func NewHttpTunnel(port int) *HttpTunnel {
 	}
 
 	m.Host.SetStreamHandler(mesh.Protocol, instance.streamHandler)
+
+	servHost := fmt.Sprintf("http://%s.lpweb", strings.ToLower(m.Host.ID().String()))
+	pp.Println("@serving_in_libp2p", servHost)
 
 	return instance
 }

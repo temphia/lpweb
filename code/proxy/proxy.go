@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/elazarl/goproxy"
+	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 
 	"github.com/temphia/lpweb/code/core/config"
@@ -74,5 +75,6 @@ func (wp *WebProxy) Run() error {
 	addr := fmt.Sprintf(":%d", wp.proxyPort)
 
 	log.Println("listening proxy ", addr)
+	pp.Println("listening proxy ", addr)
 	return http.ListenAndServe(addr, wp.proxy)
 }
