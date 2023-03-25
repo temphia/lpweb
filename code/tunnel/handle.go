@@ -41,5 +41,6 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 
 func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 	pp.Println("@new_ws")
+	defer stream.Close()
 
 }

@@ -71,6 +71,7 @@ func NewWebProxy(port int) *WebProxy {
 func (wp *WebProxy) Run() error {
 
 	wp.proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(wp.handle)
+
 	wp.proxy.Verbose = true
 
 	addr := fmt.Sprintf(":%d", wp.proxyPort)

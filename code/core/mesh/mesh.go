@@ -96,23 +96,6 @@ func New(keystr string, port int) (*Mesh, error) {
 func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
 	ctx := context.Background()
 
-	// Create libp2p node
-	node, err = libp2p.New(
-		libp2p.ListenAddrStrings(baseAddrs...),
-		libp2p.Identity(privateKey),
-		libp2p.DefaultSecurity,
-		libp2p.NATPortMap(),
-		libp2p.Transport(tcp.NewTCPTransport),
-		libp2p.FallbackDefaults,
-		libp2p.PrivateNetwork(nil),
-	)
-	if err != nil {
-		return
-	}
-
-	// Create DHT Subsystem
-	dhtOut = dht.NewDHTClient(ctx, node, datastore.NewMapDatastore())
-
 	// Convert Bootstap Nodes into usable addresses.
 	addrs := make(map[peer.ID]*peer.AddrInfo, len(BootStrapPeers))
 	for _, addrStr := range BootStrapPeers {
@@ -131,6 +114,36 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 		}
 		pi.Addrs = append(pi.Addrs, pii.Addrs...)
 	}
+
+	finalAddrs := make([]peer.AddrInfo, 0, len(BootStrapPeers))
+
+	for _, addr := range addrs {
+		finalAddrs = append(finalAddrs, *addr)
+	}
+
+	// Create libp2p node
+	node, err = libp2p.New(
+		libp2p.ListenAddrStrings(baseAddrs...),
+		libp2p.Identity(privateKey),
+		libp2p.DefaultSecurity,
+		libp2p.NATPortMap(),
+		libp2p.Transport(tcp.NewTCPTransport),
+		libp2p.FallbackDefaults,
+
+		libp2p.EnableRelay(),
+		libp2p.EnableAutoRelay(),
+		libp2p.ForceReachabilityPrivate(),
+
+		libp2p.PrivateNetwork(nil),
+
+		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
+	)
+	if err != nil {
+		return
+	}
+
+	// Create DHT Subsystem
+	dhtOut = dht.NewDHTClient(ctx, node, datastore.NewMapDatastore())
 
 	// Let's connect to the bootstrap nodes first. They will tell us about the
 	// other nodes in the network.
