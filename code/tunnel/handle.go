@@ -12,9 +12,9 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
-func (ht *HttpTunnel) streamHandler(stream network.Stream) {
+func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 
-	pp.Println("@new_conn")
+	pp.Println("@new_http")
 
 	defer stream.Close()
 
@@ -37,4 +37,9 @@ func (ht *HttpTunnel) streamHandler(stream network.Stream) {
 
 	buf := bytes.NewBuffer(out)
 	io.Copy(stream, buf)
+}
+
+func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
+	pp.Println("@new_ws")
+
 }

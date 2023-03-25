@@ -43,7 +43,8 @@ func NewHttpTunnel(port int) *HttpTunnel {
 		seekers:      []seekers.Seeker{seeker},
 	}
 
-	m.Host.SetStreamHandler(mesh.Protocol, instance.streamHandler)
+	m.Host.SetStreamHandler(mesh.ProtocolHttp, instance.streamHandleHttp)
+	m.Host.SetStreamHandler(mesh.ProtocolWS, instance.streamHandleWS)
 
 	servHost := fmt.Sprintf("http://%s.lpweb", strings.ToLower(m.Host.ID().String()))
 	pp.Println("@serving_in_libp2p", servHost)

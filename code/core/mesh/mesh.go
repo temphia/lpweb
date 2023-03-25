@@ -25,7 +25,10 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-const Protocol = "/lpweb/1.0.0"
+const (
+	ProtocolHttp = "/lpweb/http/1.0.0"
+	ProtocolWS   = "/lpweb/ws/1.0.0"
+)
 
 var (
 	BootStrapPeers = []string{

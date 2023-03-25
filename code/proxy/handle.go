@@ -11,21 +11,26 @@ import (
 	"strings"
 
 	"github.com/elazarl/goproxy"
-	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core/mesh"
 )
 
 func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 
-	pp.Println("@new_connection")
+	if r.Header.Get("Upgrade") == "websocket" {
+		return wp.handleWS(r, ctx)
+	}
 
+	return wp.handleHttp(r, ctx)
+}
+
+func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	host := strings.Split(r.Host, ".")[0]
 
 	log.Println("@new_conn", r.Host)
 
 	enode := wp.getExitNode(host)
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.Protocol)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp)
 	if err != nil {
 		panic(err)
 	}
@@ -43,4 +48,9 @@ func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Reques
 	}
 
 	return nil, resp
+}
+
+func (wp *WebProxy) handleWS(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+
+	return nil, nil
 }
