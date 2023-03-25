@@ -18,7 +18,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-const Protocol = "/temphia_p2p/1.0.0"
+const Protocol = "/lpweb/1.0.0"
 
 var (
 	BootStrapPeers = []string{

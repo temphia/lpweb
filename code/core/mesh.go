@@ -50,7 +50,7 @@ func New(opts MeshOptions) *Libp2pMesh {
 
 	h.SetStreamHandler(Protocol, mesh.streamHandler)
 
-	log.Println("Serving mesh @", fmt.Sprintf("http://%s.temphiap2p", h.ID()))
+	log.Println("Serving mesh @", fmt.Sprintf("http://%s.lpweb", h.ID()))
 
 	return mesh
 }
