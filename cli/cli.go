@@ -6,13 +6,13 @@ import (
 )
 
 type CLI struct {
-	Proxy struct {
+	WebProxy struct {
 		port string `arg:"" help:"port run proxy on"`
-	} `cmd:"" help:"tunnel http port"`
+	} `cmd:"" help:"web proxy for forwrading local requests to target libweb server"`
 
-	Tunnel struct {
+	HttpTunnel struct {
 		port string `arg:"" help:"port to tunnel"`
-	} `cmd:"" help:"tunnel http port"`
+	} `cmd:"" help:"http tunnel to a http service running in local port"`
 
 	Key string
 }
@@ -22,9 +22,9 @@ func RunCLI() {
 	ctx := kong.Parse(cli)
 
 	switch ctx.Command() {
-	case "proxy":
+	case "web-proxy":
 		pp.Println("@proxy")
-	case "tunnel":
+	case "http-tunnel":
 		pp.Println("@tunnel")
 	default:
 		panic("Not implemented" + ctx.Command())
