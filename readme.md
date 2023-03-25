@@ -16,7 +16,7 @@ browser => ( proxy_or_extension_with_libp2p) => (another_libp2p_node_with_http_s
 lpweb http-tunnel --port=4000 # where 4000 is port you want to tunnel, your websevice/ dev port / python3 -m http.server
 
 # another machine
-lpweb web-proxy --port=8080 # 8080 is a port proxy, use browser/networking
+lpweb web-proxy --port=8080 # 8080 is a proxy port, use in browser/networking
 
 ```
 
