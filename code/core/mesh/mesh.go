@@ -122,11 +122,15 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 	for _, addrStr := range BootStrapPeers {
 		addr, err := ma.NewMultiaddr(addrStr)
 		if err != nil {
-			return node, dhtOut, err
+			pp.Println("@parsing_bootstrap_node1", addrStr)
+			continue
 		}
+
 		pii, err := peer.AddrInfoFromP2pAddr(addr)
 		if err != nil {
-			return node, dhtOut, err
+			pp.Println("@parsing_bootstrap_node2", addrStr)
+
+			continue
 		}
 		pi, ok := addrs[pii.ID]
 		if !ok {
@@ -182,8 +186,12 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 				lock.Lock()
 				count++
 				lock.Unlock()
-
 			}
+
+			if err != nil {
+				pp.Println("@error_connecting_bootstrap_nodes", peerInfo.String(), err.Error())
+			}
+
 		}(peerInfo)
 	}
 	wg.Wait()
