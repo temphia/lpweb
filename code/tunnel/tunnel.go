@@ -50,9 +50,16 @@ func NewHttpTunnel(port int) *HttpTunnel {
 
 func (ht *HttpTunnel) Run() error {
 
+	addrs := ht.localNode.Addrs()
+
+	maddr, err := ht.mesh.PublicMultiAddr()
+	if err == nil {
+		addrs = append(addrs, maddr)
+	}
+
 	paddr := peer.AddrInfo{
 		ID:    ht.localNode.ID(),
-		Addrs: ht.localNode.Addrs(),
+		Addrs: addrs,
 	}
 
 	out, err := paddr.MarshalJSON()

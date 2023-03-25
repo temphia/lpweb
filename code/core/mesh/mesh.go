@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/ipfs/go-datastore"
@@ -42,6 +43,14 @@ type Mesh struct {
 	DHT      *dht.IpfsDHT
 	Port     int
 	PublicIp string
+}
+
+func (m *Mesh) PublicMultiAddr() (ma.Multiaddr, error) {
+	faddr := fmt.Sprintf("/ip4/%s/tcp/%d", m.PublicIp, m.Port)
+	if strings.Contains(m.PublicIp, ":") {
+		faddr = fmt.Sprintf("/ip6/%s/tcp/%d", m.PublicIp, m.Port)
+	}
+	return ma.NewMultiaddr(faddr)
 }
 
 func New(keystr string, port int) (*Mesh, error) {
