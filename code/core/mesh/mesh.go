@@ -48,12 +48,26 @@ type Mesh struct {
 	PublicIp string
 }
 
-func (m *Mesh) PublicMultiAddr() (ma.Multiaddr, error) {
-	faddr := fmt.Sprintf("/ip4/%s/tcp/%d", m.PublicIp, m.Port)
+func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
+	tcpaddr := fmt.Sprintf("/ip4/%s/tcp/%d", m.PublicIp, m.Port)
+	qaddr := fmt.Sprintf("/ip4/%s/udp/%d/quic", m.PublicIp, m.Port)
+
 	if strings.Contains(m.PublicIp, ":") {
-		faddr = fmt.Sprintf("/ip6/%s/tcp/%d", m.PublicIp, m.Port)
+		tcpaddr = fmt.Sprintf("/ip6/%s/tcp/%d", m.PublicIp, m.Port)
+		qaddr = fmt.Sprintf("/ip6/%s/udp/%d/quic", m.PublicIp, m.Port)
 	}
-	return ma.NewMultiaddr(faddr)
+
+	m1, err := ma.NewMultiaddr(tcpaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	m2, err := ma.NewMultiaddr(qaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return []ma.Multiaddr{m1, m2}, nil
 }
 
 func New(keystr string, port int) (*Mesh, error) {
@@ -77,6 +91,7 @@ func New(keystr string, port int) (*Mesh, error) {
 	pubIp, err := findPublicIpAddr()
 	if err != nil {
 		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
+		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
 	}
 
 	host, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
