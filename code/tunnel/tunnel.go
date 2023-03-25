@@ -6,6 +6,7 @@ import (
 
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
@@ -19,8 +20,9 @@ type HttpTunnel struct {
 }
 
 func NewHttpTunnel(port int) *HttpTunnel {
+	conf := config.Get()
 
-	m, err := mesh.New(tunKey, 0)
+	m, err := mesh.New(conf.TunnelKey, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -30,7 +32,7 @@ func NewHttpTunnel(port int) *HttpTunnel {
 		log.Println("httpd@", m.String())
 	}
 
-	seeker := etcd.New()
+	seeker := etcd.New(conf.UUID)
 
 	instance := &HttpTunnel{
 		mesh:         m,

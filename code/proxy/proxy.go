@@ -10,6 +10,7 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/libp2p/go-libp2p/core/host"
 
+	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
@@ -31,9 +32,11 @@ type WebProxy struct {
 
 func NewWebProxy(port int) *WebProxy {
 
+	conf := config.Get()
+
 	proxy := goproxy.NewProxyHttpServer()
 
-	m, err := mesh.New(proxyKey, 0)
+	m, err := mesh.New(conf.ProxyKey, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +48,7 @@ func NewWebProxy(port int) *WebProxy {
 		log.Println("httpd@", m.String())
 	}
 
-	seeker := etcd.New()
+	seeker := etcd.New(conf.UUID)
 
 	instance := &WebProxy{
 		mesh:       m,

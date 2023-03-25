@@ -14,16 +14,12 @@ import (
 var uuid = "9e7caedb576b1ab1a4d209da31f96389"
 var URL = "https://discovery.etcd.io/%s"
 
-func init() {
-	// InitilizeUUID()
-}
-
 type PubEtcd struct {
 	baseURL string
 	uuid    string
 }
 
-func New() *PubEtcd {
+func New(uuid string) *PubEtcd {
 	burl := fmt.Sprintf(URL, uuid)
 
 	return &PubEtcd{

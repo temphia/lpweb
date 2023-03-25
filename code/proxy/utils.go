@@ -8,8 +8,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 )
 
-const proxyKey = "drwytfvhjqui3bdoi32kd832houj3p2i3pj3nkl821oeubj01[eoj;kn.o2penkl1ohpekln2,m12hep1nkl,m1ephil"
-
 func deny(s network.Stream) {
 	pp.Println("proxy won't accept lpweb request, it proxies web reqest to libweb")
 	s.Close()
