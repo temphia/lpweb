@@ -9,11 +9,11 @@ import (
 
 type CLI struct {
 	WebProxy struct {
-		port int `arg:"" help:"port run proxy on"`
+		Port int `help:"port run proxy on"`
 	} `cmd:"" help:"web proxy for forwrading local requests to target libweb server"`
 
 	HttpTunnel struct {
-		port int `arg:"" help:"port to tunnel"`
+		Port int `help:"port to tunnel"`
 	} `cmd:"" help:"http tunnel to a http service running in local port"`
 
 	Key string
@@ -38,11 +38,11 @@ func RunCLI() {
 
 func (c *CLI) runWebProxy() {
 	pp.Println("@start webproxy")
-	if c.WebProxy.port == 0 {
-		c.WebProxy.port = 8080
+	if c.WebProxy.Port == 0 {
+		c.WebProxy.Port = 8080
 	}
 
-	wproxy := proxy.NewWebProxy(c.WebProxy.port)
+	wproxy := proxy.NewWebProxy(c.WebProxy.Port)
 
 	pp.Println("@run", wproxy.Run())
 
@@ -50,7 +50,11 @@ func (c *CLI) runWebProxy() {
 
 func (c *CLI) runHttpTunnel() {
 	pp.Println("@start http tunnel")
-	htun := tunnel.NewHttpTunnel(c.HttpTunnel.port)
+	if c.HttpTunnel.Port == 0 {
+		panic("tunnel port is needed")
+	}
+
+	htun := tunnel.NewHttpTunnel(c.HttpTunnel.Port)
 
 	pp.Println("@run", htun.Run())
 }

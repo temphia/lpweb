@@ -4,9 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
@@ -14,10 +12,10 @@ import (
 )
 
 type HttpTunnel struct {
-	mesh *mesh.Mesh
-
-	localNode host.Host
-	seekers   []seekers.Seeker
+	mesh         *mesh.Mesh
+	tunnelToPort int
+	localNode    host.Host
+	seekers      []seekers.Seeker
 }
 
 func NewHttpTunnel(port int) *HttpTunnel {
@@ -27,10 +25,6 @@ func NewHttpTunnel(port int) *HttpTunnel {
 		panic(err)
 	}
 
-	m.Host.SetStreamHandler(mesh.Protocol, func(s network.Stream) {
-		pp.Println("@new request")
-	})
-
 	log.Println("p2p_relay@", m.Host.ID().String())
 	for _, m := range m.Host.Addrs() {
 		log.Println("httpd@", m.String())
@@ -39,12 +33,13 @@ func NewHttpTunnel(port int) *HttpTunnel {
 	seeker := etcd.New()
 
 	instance := &HttpTunnel{
-		mesh:      m,
-		localNode: m.Host,
-		seekers: []seekers.Seeker{
-			seeker,
-		},
+		mesh:         m,
+		localNode:    m.Host,
+		tunnelToPort: port,
+		seekers:      []seekers.Seeker{seeker},
 	}
+
+	m.Host.SetStreamHandler(mesh.Protocol, instance.streamHandler)
 
 	return instance
 }
