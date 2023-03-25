@@ -62,6 +62,9 @@ func (ht *HttpTunnel) Run() error {
 		s.Set(paddr.ID.String(), string(out))
 	}
 
+	ch := make(chan bool)
+	ch <- false
+
 	return nil
 
 }

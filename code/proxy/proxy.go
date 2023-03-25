@@ -60,11 +60,13 @@ func NewWebProxy(port int) *WebProxy {
 	return instance
 }
 
-func (wp *WebProxy) Run() {
+func (wp *WebProxy) Run() error {
 
 	wp.proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(wp.handle)
 	wp.proxy.Verbose = true
 
+	go wp.listenTLS()
+
 	log.Println("listening proxy")
-	log.Fatal(http.ListenAndServe(":8080", wp.proxy))
+	return http.ListenAndServe(":8080", wp.proxy)
 }

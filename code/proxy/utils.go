@@ -17,7 +17,7 @@ func deny(s network.Stream) {
 
 func (wp *WebProxy) nodeAddrs(target string) (*peer.AddrInfo, error) {
 
-	id, err := peer.IDFromString(target)
+	id, err := peer.IDFromBytes([]byte(target))
 	if err != nil {
 		return nil, err
 	}
