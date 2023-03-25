@@ -12,6 +12,7 @@ import (
 	"sync"
 
 	"github.com/ipfs/go-datastore"
+	"github.com/k0kubun/pp"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 
+	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 
 	ma "github.com/multiformats/go-multiaddr"
@@ -48,12 +50,26 @@ type Mesh struct {
 	PublicIp string
 }
 
-func (m *Mesh) PublicMultiAddr() (ma.Multiaddr, error) {
-	faddr := fmt.Sprintf("/ip4/%s/tcp/%d", m.PublicIp, m.Port)
+func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
+	tcpaddr := fmt.Sprintf("/ip4/%s/tcp/%d", m.PublicIp, m.Port)
+	qaddr := fmt.Sprintf("/ip4/%s/udp/%d/quic", m.PublicIp, m.Port)
+
 	if strings.Contains(m.PublicIp, ":") {
-		faddr = fmt.Sprintf("/ip6/%s/tcp/%d", m.PublicIp, m.Port)
+		tcpaddr = fmt.Sprintf("/ip6/%s/tcp/%d", m.PublicIp, m.Port)
+		qaddr = fmt.Sprintf("/ip6/%s/udp/%d/quic", m.PublicIp, m.Port)
 	}
-	return ma.NewMultiaddr(faddr)
+
+	m1, err := ma.NewMultiaddr(tcpaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	m2, err := ma.NewMultiaddr(qaddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return []ma.Multiaddr{m1, m2}, nil
 }
 
 func New(keystr string, port int) (*Mesh, error) {
@@ -71,12 +87,17 @@ func New(keystr string, port int) (*Mesh, error) {
 
 	baseAddrs := []string{
 		fmt.Sprintf("/ip6/::/tcp/%d", port),
+		fmt.Sprintf("/ip6/::/udp/%d/quic", port),
 		fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port),
+		fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port),
 	}
 
 	pubIp, err := findPublicIpAddr()
-	if err != nil {
+	if err == nil {
+		pp.Println("@listening_to_public_addrs", pubIp)
+
 		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
+		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
 	}
 
 	host, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
@@ -128,6 +149,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
 		libp2p.Transport(tcp.NewTCPTransport),
+		libp2p.Transport(quic.NewTransport),
 		libp2p.FallbackDefaults,
 
 		libp2p.EnableRelay(),
@@ -138,6 +160,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 
 		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
 	)
+
 	if err != nil {
 		return
 	}

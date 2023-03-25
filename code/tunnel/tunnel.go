@@ -58,7 +58,7 @@ func (ht *HttpTunnel) Run() error {
 
 	maddr, err := ht.mesh.PublicMultiAddr()
 	if err == nil {
-		addrs = append(addrs, maddr)
+		addrs = append(addrs, maddr...)
 	}
 
 	paddr := peer.AddrInfo{
