@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"regexp"
@@ -25,6 +26,8 @@ type WebProxy struct {
 
 	upNodes    map[string]*UpNode
 	upnodeLock sync.Mutex
+
+	proxyPort int
 }
 
 func NewWebProxy(port int) *WebProxy {
@@ -65,8 +68,10 @@ func (wp *WebProxy) Run() error {
 	wp.proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(wp.handle)
 	wp.proxy.Verbose = true
 
+	addr := fmt.Sprintf(":%d", wp.proxyPort)
+
 	go wp.listenTLS()
 
-	log.Println("listening proxy")
-	return http.ListenAndServe(":8080", wp.proxy)
+	log.Println("listening proxy ", addr)
+	return http.ListenAndServe(addr, wp.proxy)
 }
