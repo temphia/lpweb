@@ -40,7 +40,7 @@ func NewWebProxy(port int) *WebProxy {
 
 	m.Host.SetStreamHandler(mesh.Protocol, deny)
 
-	log.Println("p2p_relay@", m.Host.ID())
+	log.Println("p2p_relay@", m.Host.ID().String())
 	for _, m := range m.Host.Addrs() {
 		log.Println("httpd@", m.String())
 	}
@@ -69,8 +69,6 @@ func (wp *WebProxy) Run() error {
 	wp.proxy.Verbose = true
 
 	addr := fmt.Sprintf(":%d", wp.proxyPort)
-
-	go wp.listenTLS()
 
 	log.Println("listening proxy ", addr)
 	return http.ListenAndServe(addr, wp.proxy)

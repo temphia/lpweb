@@ -2,12 +2,15 @@ package proxy
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/tidwall/gjson"
 )
 
 type UpNode struct {
@@ -27,11 +30,6 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 
 	if ok {
 		return enode
-	}
-
-	pp.Println("@FIXME")
-	if enode == nil {
-		panic("impl")
 	}
 
 	addr, err := wp.resolveAndConnect(target)
@@ -58,27 +56,30 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 // convert pubkeyhash like 12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE to actual connectable
 // address /ip4/127.0.0.1/tcp/8083/p2p/12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE like this and connect
 func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
-	pid, err := peer.IDFromBytes([]byte(target))
-	if err != nil {
-		return nil, err
-	}
 
 	addr := peer.AddrInfo{
-		ID:    pid,
+		ID:    "",
 		Addrs: make([]multiaddr.Multiaddr, 0),
 	}
 
 	for _, s := range wp.seekers {
-		out, err := s.Get(pid.String())
+		out, err := s.Get(target)
 		if err != nil {
 			continue
 		}
-		maybeAddr := peer.AddrInfo{}
-		maybeAddr.UnmarshalJSON([]byte(out))
 
-		if addr.ID != maybeAddr.ID {
-			pp.Println("different addr", addr.ID, maybeAddr.ID)
+		pp.Println("seeker_resp", out)
+
+		maybeAddr := peer.AddrInfo{}
+		err = maybeAddr.UnmarshalJSON([]byte(gjson.Get(out, "node.value").String()))
+		if err != nil {
+			pp.Println("@err_skipping", err)
 			continue
+		}
+
+		if addr.ID == "" && strings.ToLower(maybeAddr.ID.String()) == target {
+			pp.Println("@assigning_addr")
+			addr.ID = maybeAddr.ID
 		}
 
 		for _, m := range maybeAddr.Addrs {
@@ -87,7 +88,9 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 
 	}
 
-	err = wp.localNode.Connect(context.Background(), addr)
+	fmt.Println("@address is |>", addr)
+
+	err := wp.localNode.Connect(context.Background(), addr)
 	if err != nil {
 		pp.Println(err)
 		return nil, err

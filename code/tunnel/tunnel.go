@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"log"
+	"strings"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -30,7 +31,7 @@ func NewHttpTunnel(port int) *HttpTunnel {
 		pp.Println("@new request")
 	})
 
-	log.Println("p2p_relay@", m.Host.ID())
+	log.Println("p2p_relay@", m.Host.ID().String())
 	for _, m := range m.Host.Addrs() {
 		log.Println("httpd@", m.String())
 	}
@@ -68,7 +69,7 @@ func (ht *HttpTunnel) Run() error {
 	}
 
 	for _, s := range ht.seekers {
-		s.Set(paddr.ID.String(), string(out))
+		s.Set(strings.ToLower(paddr.ID.String()), string(out))
 	}
 
 	ch := make(chan bool)

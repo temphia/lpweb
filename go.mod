@@ -6,12 +6,13 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/alecthomas/kong v0.7.1
 	github.com/elazarl/goproxy v0.0.0-20221015165544-a0805db90819
-	github.com/inconshreveable/go-vhost v1.0.0
 	github.com/ipfs/go-datastore v0.6.0
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/libp2p/go-libp2p v0.26.4
 	github.com/libp2p/go-libp2p-kad-dht v0.21.1
 	github.com/multiformats/go-multiaddr v0.8.0
+	github.com/tidwall/gjson v1.14.4
+	github.com/tidwall/pretty v1.2.1
 )
 
 require (
@@ -97,7 +98,7 @@ require (
 	github.com/quic-go/webtransport-go v0.5.2 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect

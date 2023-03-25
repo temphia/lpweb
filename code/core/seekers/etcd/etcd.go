@@ -11,7 +11,7 @@ import (
 	"github.com/tidwall/pretty"
 )
 
-var uuid = "f116f98c258214878c4a1fa08563efbf"
+var uuid = "9e7caedb576b1ab1a4d209da31f96389"
 var URL = "https://discovery.etcd.io/%s"
 
 func init() {
@@ -85,5 +85,9 @@ func (p *PubEtcd) Get(hash string) (string, error) {
 }
 
 func urlkey(hash, url string) string {
-	return fmt.Sprintf("%s/%s-servers", url, hash)
+	return fmt.Sprintf("%s/%s-servers", url, hashIt(hash))
+}
+
+func hashIt(bv string) string {
+	return strings.ToLower(bv)
 }
