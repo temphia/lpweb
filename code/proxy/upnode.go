@@ -58,13 +58,18 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 // consvert pubkeyhash like 12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE to sth actual connectable
 // address /ip4/127.0.0.1/tcp/8083/p2p/12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE like this and connect
 func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
+	pid, err := peer.IDFromString(target)
+	if err != nil {
+		return nil, err
+	}
+
 	addr := peer.AddrInfo{
-		ID:    peer.ID(target),
+		ID:    pid,
 		Addrs: make([]multiaddr.Multiaddr, 0),
 	}
 
 	for _, s := range wp.seekers {
-		out, err := s.Get(target)
+		out, err := s.Get(pid.String())
 		if err != nil {
 			continue
 		}
@@ -82,7 +87,7 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 
 	}
 
-	err := wp.localNode.Connect(context.Background(), addr)
+	err = wp.localNode.Connect(context.Background(), addr)
 	if err != nil {
 		pp.Println(err)
 	}
