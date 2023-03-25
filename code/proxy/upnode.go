@@ -90,6 +90,7 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	err = wp.localNode.Connect(context.Background(), addr)
 	if err != nil {
 		pp.Println(err)
+		return nil, err
 	}
 
 	return &addr, nil
