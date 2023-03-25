@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/elazarl/goproxy"
-	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p/core/host"
 
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/temphia/lpweb/code/core"

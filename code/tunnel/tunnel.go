@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/k0kubun/pp"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
-	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/temphia/lpweb/code/core"
 	"github.com/temphia/lpweb/code/seekers"
 	"github.com/temphia/lpweb/code/seekers/etcd"
