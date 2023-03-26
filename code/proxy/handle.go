@@ -56,53 +56,59 @@ func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Re
 func (wp *WebProxy) handleWS(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	hash := extractHostHash(r.Host)
 	pp.Println("@new_ws_conn", r.Host)
+	pp.Println(hash)
 
-	enode := wp.getExitNode(hash)
+	/*
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolWS)
-	if err != nil {
-		panic(err)
-	}
+		enode := wp.getExitNode(hash)
 
-	pp.Println("@opened_new_stream")
+		stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolWS)
+		if err != nil {
+			panic(err)
+		}
 
-	out, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		panic(err)
-	}
+		pp.Println("@opened_new_stream")
 
-	pp.Println("@dump_request")
+		out, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			panic(err)
+		}
 
-	pp.Println(io.Copy(stream, bytes.NewBuffer(out)))
+		pp.Println("@dump_request")
 
-	pp.Println("@opened_new_stream")
+		pp.Println(io.Copy(stream, bytes.NewBuffer(out)))
 
-	resp, err := http.ReadResponse(bufio.NewReader(stream), r)
-	if err != nil {
-		panic(err)
-	}
+		pp.Println("@opened_new_stream")
 
-	pp.Println("@read_response")
+		resp, err := http.ReadResponse(bufio.NewReader(stream), r)
+		if err != nil {
+			panic(err)
+		}
 
-	_, rw, err := ctx.RespWriter.(http.Hijacker).Hijack()
-	if err != nil {
-		pp.Println("@err_while_hijacking", err.Error())
+		pp.Println("@read_response")
+
+		_, rw, err := ctx.RespWriter.(http.Hijacker).Hijack()
+		if err != nil {
+			pp.Println("@err_while_hijacking", err.Error())
+			return nil, resp
+		}
+
+		pp.Println("@hijack_success")
+
+		go func() {
+			pp.Println("@copy_stream1")
+			pp.Println(io.Copy(rw, stream))
+		}()
+
+		go func() {
+			pp.Println("@copy_stream2")
+			pp.Println(io.Copy(stream, rw))
+		}()
+
 		return nil, resp
-	}
+	*/
 
-	pp.Println("@hijack_success")
-
-	go func() {
-		pp.Println("@copy_stream1")
-		pp.Println(io.Copy(rw, stream))
-	}()
-
-	go func() {
-		pp.Println("@copy_stream2")
-		pp.Println(io.Copy(stream, rw))
-	}()
-
-	return nil, resp
+	return nil, nil
 }
 
 func extractHostHash(host string) string {
