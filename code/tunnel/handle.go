@@ -2,7 +2,6 @@ package tunnel
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,7 +13,8 @@ import (
 
 func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 
-	pp.Println("@new_http")
+	maddr, _ := stream.Conn().RemoteMultiaddr().MarshalJSON()
+	pp.Println("@new_http_from", string(maddr))
 
 	defer stream.Close()
 
@@ -30,17 +30,28 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
-	out, err := httputil.DumpResponse(resp, true)
+	defer resp.Body.Close()
+
+	bodyBackup := resp.Body
+	resp.Body = nil
+
+	out, err := httputil.DumpResponse(resp, false)
 	if err != nil {
 		panic(err)
 	}
 
-	buf := bytes.NewBuffer(out)
-	io.Copy(stream, buf)
+	pp.Println("@resp", string(out))
+
+	pp.Print("@write_head")
+	pp.Println(stream.Write(out))
+
+	pp.Print("@write_body")
+	pp.Println(io.Copy(stream, bufio.NewReader(bodyBackup)))
 }
 
 func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 	pp.Println("@new_ws")
+
 	defer stream.Close()
 
 }

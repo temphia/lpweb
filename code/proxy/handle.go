@@ -24,11 +24,11 @@ func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Reques
 }
 
 func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
-	host := strings.Split(r.Host, ".")[0]
+	hash := extractHostHash(r.Host)
 
 	log.Println("@new_conn", r.Host)
 
-	enode := wp.getExitNode(host)
+	enode := wp.getExitNode(hash)
 
 	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp)
 	if err != nil {
@@ -51,6 +51,33 @@ func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Re
 }
 
 func (wp *WebProxy) handleWS(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+	hash := extractHostHash(r.Host)
+	log.Println("@new_conn", r.Host)
 
-	return nil, nil
+	enode := wp.getExitNode(hash)
+
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolWS)
+	if err != nil {
+		panic(err)
+	}
+
+	out, err := httputil.DumpRequest(r, true)
+	if err != nil {
+		panic(err)
+	}
+
+	io.Copy(stream, bytes.NewBuffer(out))
+
+	resp, err := http.ReadResponse(bufio.NewReader(stream), r)
+	if err != nil {
+		panic(err)
+	}
+
+	// http.Hijacker here
+
+	return nil, resp
+}
+
+func extractHostHash(host string) string {
+	return strings.Split(host, ".")[0]
 }

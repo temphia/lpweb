@@ -10,8 +10,8 @@ import (
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/temphia/lpweb/code/core"
 	"github.com/tidwall/gjson"
-	"github.com/tidwall/pretty"
 )
 
 type UpNode struct {
@@ -48,6 +48,12 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 	}
 
 	wp.upnodeLock.Lock()
+	newnewnode, ok := wp.upNodes[target]
+	if ok {
+		wp.upnodeLock.Unlock()
+		return newnewnode
+	}
+
 	wp.upNodes[target] = enode
 	wp.upnodeLock.Unlock()
 
@@ -89,18 +95,18 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	}
 
 	pp.Println("@found_sth_from_seekers")
-	printAddr(addr)
+	core.PrintPeerAddr(addr)
 
 	daddr, err := wp.getDHTAddrs(addr.ID)
 	if err == nil {
-		printAddr(daddr)
+		core.PrintPeerAddr(addr)
 		// combine and deduplicate
 		daddr.Addrs = append(daddr.Addrs, addr.Addrs...)
 		addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
 	}
 
 	pp.Println("@final_address")
-	printAddr(addr)
+	core.PrintPeerAddr(addr)
 
 	err = wp.localNode.Connect(context.Background(), addr)
 	if err == nil {
@@ -115,12 +121,6 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 
 func (wp *WebProxy) getDHTAddrs(pi peer.ID) (peer.AddrInfo, error) {
 	return wp.mesh.DHT.FindPeer(context.Background(), pi)
-}
-
-func printAddr(pa peer.AddrInfo) {
-	paddr, _ := pa.MarshalJSON()
-	fmt.Print(string(pretty.Color(pretty.Pretty(paddr), nil)))
-	pp.Printf("\n")
 }
 
 func removeDuplicateAddrs(strSlice []multiaddr.Multiaddr) []multiaddr.Multiaddr {
