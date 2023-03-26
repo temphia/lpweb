@@ -21,6 +21,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 
+	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
 	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 
@@ -55,6 +56,8 @@ type Mesh struct {
 	DHT      *dht.IpfsDHT
 	Port     int
 	PublicIp string
+
+	ResourceManager *ResourceManager
 }
 
 func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
@@ -113,10 +116,11 @@ func New(keystr string, port int) (*Mesh, error) {
 	}
 
 	mesh := &Mesh{
-		Host:     host,
-		DHT:      dh,
-		Port:     port,
-		PublicIp: pubIp,
+		Host:            host,
+		DHT:             dh,
+		Port:            port,
+		PublicIp:        pubIp,
+		ResourceManager: host.Network().ResourceManager().(*ResourceManager),
 	}
 
 	return mesh, nil
@@ -155,24 +159,30 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 		finalAddrs = append(finalAddrs, *addr)
 	}
 
+	rm, err := NewResourceManager()
+	if err != nil {
+		panic(err)
+	}
+
 	// Create libp2p node
 	node, err = libp2p.New(
+		libp2p.UserAgent("libp2p/alpha1"),
 		libp2p.ListenAddrStrings(baseAddrs...),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
 		libp2p.NATPortMap(),
 		libp2p.Transport(tcp.NewTCPTransport),
 		libp2p.Transport(quic.NewTransport),
-		libp2p.FallbackDefaults,
-
 		libp2p.EnableRelay(),
-		libp2p.EnableAutoRelay(),
+		libp2p.ResourceManager(rm),
 		libp2p.ForceReachabilityPrivate(),
 
 		libp2p.PrivateNetwork(nil),
 
-		libp2p.EnableHolePunching(),
+		libp2p.EnableHolePunching(holepunch.WithTracer(&tracer{})),
+
 		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
+		libp2p.FallbackDefaults,
 	)
 
 	if err != nil {
@@ -239,4 +249,10 @@ func findPublicIpAddr() (string, error) {
 	}
 
 	return string(out), err
+}
+
+type tracer struct{}
+
+func (t *tracer) Trace(evt *holepunch.Event) {
+	pp.Println("TRACER|>", evt.Peer.Loggable())
 }

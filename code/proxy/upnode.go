@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -105,12 +104,18 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 		addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
 	}
 
-	pp.Println("@final_address")
+	pp.Println("@final_address/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
 	core.PrintPeerAddr(addr)
 
 	err = wp.localNode.Connect(context.Background(), addr)
 	if err == nil {
-		fmt.Println("@connect_success", addr)
+
+		nconn, err := wp.mesh.Host.Network().DialPeer(context.TODO(), addr.ID)
+		if err == nil {
+			pp.Println("@after_dail/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
+			pp.Println("@dial_peer", nconn.RemoteMultiaddr().String())
+		}
+
 		return &addr, nil
 	}
 
