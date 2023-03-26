@@ -2,13 +2,10 @@ package config
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/adrg/xdg"
 	"github.com/k0kubun/pp"
@@ -41,26 +38,26 @@ func initConfig() {
 	if os.IsNotExist(err) {
 		pp.Println("@config_not_found_init_new", configFile)
 
-		resp, err := http.Get("https://discovery.etcd.io/new?size=3")
-		if err != nil {
-			log.Fatal("couldnot generate uuid", err)
-			return
-		}
+		// resp, err := http.Get("https://discovery.etcd.io/new?size=3")
+		// if err != nil {
+		// 	log.Fatal("couldnot generate uuid", err)
+		// 	return
+		// }
 
-		if resp.StatusCode != 200 {
-			log.Fatal(resp)
-		}
+		// if resp.StatusCode != 200 {
+		// 	log.Fatal(resp)
+		// }
 
-		uuidBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
+		// uuidBytes, err := io.ReadAll(resp.Body)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// 	return
+		// }
 
-		uuid := strings.Split(string(uuidBytes), "/")
+		// uuid := strings.Split(string(uuidBytes), "/")
 
 		config := &Config{
-			UUID:      uuid[3],
+			UUID:      "a8a3d89ff73fc23a33f775441d8b51ac",
 			TunnelKey: randomString(32),
 			ProxyKey:  randomString(32),
 		}
