@@ -105,12 +105,14 @@ func New(keystr string, port int) (*Mesh, error) {
 		return nil, err
 	}
 
-	return &Mesh{
+	mesh := &Mesh{
 		Host:     host,
 		DHT:      dh,
 		Port:     port,
 		PublicIp: pubIp,
-	}, nil
+	}
+
+	return mesh, nil
 
 }
 
