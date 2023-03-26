@@ -5,16 +5,18 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 
 	"github.com/elazarl/goproxy"
+	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core/mesh"
 )
 
 func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+
+	pp.Println(r.Header)
 
 	if r.Header.Get("Upgrade") == "websocket" {
 		return wp.handleWS(r, ctx)
@@ -26,7 +28,7 @@ func (wp *WebProxy) handle(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Reques
 func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	hash := extractHostHash(r.Host)
 
-	log.Println("@new_conn", r.Host)
+	pp.Println("@new_normal_conn", r.Host)
 
 	enode := wp.getExitNode(hash)
 
@@ -40,7 +42,8 @@ func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Re
 		panic(err)
 	}
 
-	io.Copy(stream, bytes.NewBuffer(out))
+	pp.Println("@copy_request")
+	pp.Println(io.Copy(stream, bytes.NewBuffer(out)))
 
 	resp, err := http.ReadResponse(bufio.NewReader(stream), r)
 	if err != nil {
@@ -52,7 +55,7 @@ func (wp *WebProxy) handleHttp(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Re
 
 func (wp *WebProxy) handleWS(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
 	hash := extractHostHash(r.Host)
-	log.Println("@new_conn", r.Host)
+	pp.Println("@new_ws_conn", r.Host)
 
 	enode := wp.getExitNode(hash)
 
@@ -61,19 +64,43 @@ func (wp *WebProxy) handleWS(r *http.Request, ctx *goproxy.ProxyCtx) (*http.Requ
 		panic(err)
 	}
 
+	pp.Println("@opened_new_stream")
+
 	out, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		panic(err)
 	}
 
-	io.Copy(stream, bytes.NewBuffer(out))
+	pp.Println("@dump_request")
+
+	pp.Println(io.Copy(stream, bytes.NewBuffer(out)))
+
+	pp.Println("@opened_new_stream")
 
 	resp, err := http.ReadResponse(bufio.NewReader(stream), r)
 	if err != nil {
 		panic(err)
 	}
 
-	// http.Hijacker here
+	pp.Println("@read_response")
+
+	_, rw, err := ctx.RespWriter.(http.Hijacker).Hijack()
+	if err != nil {
+		pp.Println("@err_while_hijacking", err.Error())
+		return nil, resp
+	}
+
+	pp.Println("@hijack_success")
+
+	go func() {
+		pp.Println("@copy_stream1")
+		pp.Println(io.Copy(rw, stream))
+	}()
+
+	go func() {
+		pp.Println("@copy_stream2")
+		pp.Println(io.Copy(stream, rw))
+	}()
 
 	return nil, resp
 }
