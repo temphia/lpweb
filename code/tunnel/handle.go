@@ -26,7 +26,16 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
-	req.URL.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
+	req.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
+	req.URL.Host = req.Host
+	req.URL.Scheme = "http"
+	req.RequestURI = ""
+	req.Header.Del("Accept-Encoding")
+
+	pp.Println(req)
+
+	pp.Println("@connecting_to", req.URL.String())
+
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	if err != nil {
 		pp.Println("@req", req)
@@ -43,13 +52,24 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
+	// resp.Header.Get("Transfer-Encoding")
+
 	pp.Println("@resp", string(out))
 
 	pp.Print("@write_head")
 	pp.Println(stream.Write(out))
 
+	// outstr, err := ioutil.ReadAll(bodyBackup)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// pp.Println("@BODY", string(outstr))
+	// pp.Println(stream.Write(outstr))
+
 	pp.Print("@write_body")
-	pp.Println(io.Copy(stream, bufio.NewReader(bodyBackup)))
+	pp.Println(io.Copy(stream, (bodyBackup)))
+
 }
 
 var (

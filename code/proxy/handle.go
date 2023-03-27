@@ -37,6 +37,7 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 	if err != nil {
 		panic(err)
 	}
+	defer resp.Body.Close()
 
 	header := w.Header()
 	for k, v := range resp.Header {
@@ -46,8 +47,15 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 	w.WriteHeader(resp.StatusCode)
 
 	pp.Println("@write_response")
-	pp.Println(io.Copy(w, resp.Body))
-	resp.Body.Close()
+	if resp.Header.Get("Content-Length") == "" {
+		pp.Println("@forcing_chunked_mode")
+		header.Set("Transfer-Encoding", "chunked")
+		pp.Println(io.Copy(httputil.NewChunkedWriter(w), stream))
+		return
+	}
+
+	pp.Println(io.Copy(w, stream))
+
 }
 
 func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {

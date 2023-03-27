@@ -3,11 +3,14 @@ package main
 import (
 	_ "embed"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/k0kubun/pp"
 )
 
-// go:embed index.html
+//go:embed index.html
 var indexHtml []byte
 
 var addr = flag.String("addr", ":8000", "http service address")
@@ -17,13 +20,17 @@ func main() {
 	hub := newHub()
 	go hub.run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		pp.Println("@index")
 		w.Header().Add("Content-Type", "text/html; charset=utf-8")
+		w.Header().Add("Content-Length", fmt.Sprint(len(indexHtml)))
 		w.Write(indexHtml)
 	})
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(hub, w, r)
 	})
+
+	pp.Println("@running_server :", *addr)
 
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
