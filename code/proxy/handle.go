@@ -49,7 +49,7 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 	w.WriteHeader(resp.StatusCode)
 
 	pp.Println("@write_response")
-	if resp.Header.Get("Content-Length") == "" {
+	if resp.Header.Get("Content-Length") == "" && header.Get("Transfer-Encoding") != "chunked" && resp.Header.Get("Content-Type") == "" {
 		pp.Println("@forcing_chunked_mode")
 		header.Set("Transfer-Encoding", "chunked")
 		pp.Println(io.Copy(httputil.NewChunkedWriter(w), stream))
