@@ -17,8 +17,6 @@ import (
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
 )
 
-var r = regexp.MustCompile(`\.lpweb`)
-
 type WebProxy struct {
 	mesh      *mesh.Mesh
 	localNode host.Host
@@ -70,13 +68,26 @@ func NewWebProxy(port int) *WebProxy {
 
 func (wp *WebProxy) Run() error {
 
-	wp.proxy.OnRequest(goproxy.ReqHostMatches(r)).DoFunc(wp.handle)
-
 	wp.proxy.Verbose = true
 
 	addr := fmt.Sprintf(":%d", wp.proxyPort)
 
 	log.Println("listening proxy ", addr)
 	pp.Println("listening proxy ", addr)
-	return http.ListenAndServe(addr, wp.proxy)
+	return http.ListenAndServe(addr, wp)
+}
+
+var hostRegex = regexp.MustCompile(`[A-Za-z0-9]*\.*[A-Za-z0-9]*\.lpweb`)
+
+func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "CONNECT" || !hostRegex.MatchString(r.Host) {
+		wp.proxy.ServeHTTP(w, r)
+		return
+	}
+
+	if r.Header.Get("Upgrade") == "websocket" {
+		wp.handleWS(r, w)
+	} else {
+		wp.handleHttp(r, w)
+	}
 }
