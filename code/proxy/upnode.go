@@ -108,6 +108,8 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	err = wp.localNode.Connect(context.Background(), addr)
 	if err == nil {
 
+		pp.Println("@remote_addr_before_dial", wp.mesh.Host.Network().ConnsToPeer(addr.ID)[0].RemoteMultiaddr().String())
+
 		nconn, err := wp.mesh.Host.Network().DialPeer(context.TODO(), addr.ID)
 		if err == nil {
 			pp.Println("@after_dail/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
