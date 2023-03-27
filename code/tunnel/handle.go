@@ -16,7 +16,11 @@ import (
 
 func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 
-	maddr, _ := stream.Conn().RemoteMultiaddr().MarshalJSON()
+	maddr, err := stream.Conn().RemoteMultiaddr().MarshalJSON()
+	if err != nil {
+		panic(err)
+	}
+
 	pp.Println("@new_http_from", string(maddr))
 
 	defer stream.Close()
@@ -26,13 +30,9 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
-	req.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
-	req.URL.Host = req.Host
+	req.URL.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
 	req.URL.Scheme = "http"
 	req.RequestURI = ""
-	req.Header.Del("Accept-Encoding")
-
-	pp.Println(req)
 
 	pp.Println("@connecting_to", req.URL.String())
 
@@ -52,20 +52,10 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
-	// resp.Header.Get("Transfer-Encoding")
-
 	pp.Println("@resp", string(out))
 
 	pp.Print("@write_head")
 	pp.Println(stream.Write(out))
-
-	// outstr, err := ioutil.ReadAll(bodyBackup)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// pp.Println("@BODY", string(outstr))
-	// pp.Println(stream.Write(outstr))
 
 	pp.Print("@write_body")
 	pp.Println(io.Copy(stream, (bodyBackup)))
