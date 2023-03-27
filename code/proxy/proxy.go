@@ -80,14 +80,18 @@ func (wp *WebProxy) Run() error {
 var hostRegex = regexp.MustCompile(`[A-Za-z0-9]*\.*[A-Za-z0-9]*\.lpweb`)
 
 func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "CONNECT" || !hostRegex.MatchString(r.Host) {
-		wp.proxy.ServeHTTP(w, r)
-		return
+	pp.Println("@ALL_INTERCEPT", r.Method)
+
+	if hostRegex.MatchString(r.Host) {
+		pp.Println("@IPWEB_INTERCEPT", r.Method)
+
+		if r.Method == "CONNECT" {
+			wp.handleWS(r, w)
+			return
+		} else {
+			wp.handleHttp(r, w)
+		}
 	}
 
-	if r.Header.Get("Upgrade") == "websocket" {
-		wp.handleWS(r, w)
-	} else {
-		wp.handleHttp(r, w)
-	}
+	wp.proxy.ServeHTTP(w, r)
 }
