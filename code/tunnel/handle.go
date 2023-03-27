@@ -2,9 +2,9 @@ package tunnel
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 
@@ -62,38 +62,25 @@ var (
 )
 
 func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
-	pp.Println("@new_ws")
-	req, err := http.ReadRequest(bufio.NewReader(stream))
+	defer stream.Close()
+
+	tcpServer, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("localhost:%d", ht.tunnelToPort))
 	if err != nil {
 		panic(err)
 	}
 
-	req.URL.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
-
-	pp.Println("@before_dial")
-
-	wconn, resp, err := DefaultDialer.Dial(req.URL.String(), req.Header)
+	tconn, err := net.DialTCP("tcp", nil, tcpServer)
 	if err != nil {
 		panic(err)
 	}
 
-	pp.Println("@after_dial, dump_resp")
-
-	out, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		panic(err)
-	}
-
-	pp.Println("@copy_resp_to_stream")
-	pp.Println(io.Copy(stream, bytes.NewReader(out)))
-
-	nconn := wconn.UnderlyingConn()
+	pp.Println("@after_dial")
 
 	go func() {
 		pp.Println("@copy1")
-		pp.Println(io.Copy(nconn, stream))
+		pp.Println(io.Copy(tconn, stream))
 	}()
 
 	pp.Println("@copy2")
-	pp.Println(io.Copy(stream, nconn))
+	pp.Println(io.Copy(stream, tconn))
 }

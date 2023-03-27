@@ -52,8 +52,12 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 
 func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 	hash := extractHostHash(r.Host)
-	pp.Println("@new_ws_conn", r.Host)
+	pp.Println("@new_ws_conn", r.URL)
+
 	pp.Println(hash)
+
+	w.Write([]byte("HTTP/1.0 200 Connection established\r\n\r\n"))
+	pp.Println("@accepted_connect")
 
 	enode := wp.getExitNode(hash)
 
@@ -64,31 +68,20 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 
 	pp.Println("@opened_new_stream")
 
-	out, err := httputil.DumpRequest(r, true)
-	if err != nil {
-		panic(err)
-	}
-	pp.Println("@dump_request")
-
-	pp.Println("@copy_req_to_stream")
-	pp.Println(io.Copy(stream, bytes.NewBuffer(out)))
-
-	hjconn, rw, err := w.(http.Hijacker).Hijack()
+	pp.Println("@hijack_success")
+	hjconn, _, err := w.(http.Hijacker).Hijack()
 	if err != nil {
 		pp.Println("@err_while_hijacking", err.Error())
 		return
 	}
-	pp.Println("@hijack_success")
-
-	pp.Println("@write_handlshake")
-	io.Copy(hjconn, bufio.NewReader(stream))
 
 	go func() {
-		pp.Println("@copy_stream1")
-		pp.Println(io.Copy(rw, stream))
+		pp.Println("@copy_stream/req2stream")
+		pp.Println(io.Copy(stream, hjconn))
 	}()
 
-	pp.Println(io.Copy(stream, rw))
+	pp.Println("@copy_stream/stream2req")
+	pp.Println(io.Copy(hjconn, stream))
 
 }
 
