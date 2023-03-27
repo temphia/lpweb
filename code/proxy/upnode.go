@@ -88,9 +88,7 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 			addr.ID = maybeAddr.ID
 		}
 
-		for _, m := range maybeAddr.Addrs {
-			addr.Addrs = append(addr.Addrs, m)
-		}
+		addr.Addrs = append(addr.Addrs, maybeAddr.Addrs...)
 	}
 
 	pp.Println("@found_sth_from_seekers")
