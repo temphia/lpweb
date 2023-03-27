@@ -58,6 +58,8 @@ type Mesh struct {
 	PublicIp string
 
 	ResourceManager *ResourceManager
+
+	HolePunchService *holepunch.Service
 }
 
 func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
@@ -110,24 +112,27 @@ func New(keystr string, port int) (*Mesh, error) {
 		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
 	}
 
-	host, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
+	hps, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
 	if err != nil {
 		return nil, err
 	}
 
+	host := dh.Host()
+
 	mesh := &Mesh{
-		Host:            host,
-		DHT:             dh,
-		Port:            port,
-		PublicIp:        pubIp,
-		ResourceManager: host.Network().ResourceManager().(*ResourceManager),
+		Host:             host,
+		DHT:              dh,
+		Port:             port,
+		PublicIp:         pubIp,
+		ResourceManager:  host.Network().ResourceManager().(*ResourceManager),
+		HolePunchService: hps,
 	}
 
 	return mesh, nil
 
 }
 
-func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (node host.Host, dhtOut *dht.IpfsDHT, err error) {
+func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hps *holepunch.Service, dhtOut *dht.IpfsDHT, err error) {
 	ctx := context.Background()
 
 	// Convert Bootstap Nodes into usable addresses.
@@ -165,7 +170,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 	}
 
 	// Create libp2p node
-	node, err = libp2p.New(
+	node, err := libp2p.New(
 		libp2p.UserAgent("libp2p/alpha1"),
 		libp2p.ListenAddrStrings(baseAddrs...),
 		libp2p.Identity(privateKey),
@@ -179,7 +184,10 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 
 		libp2p.PrivateNetwork(nil),
 
-		libp2p.EnableHolePunching(holepunch.WithTracer(&tracer{})),
+		libp2p.EnableHolePunching(holepunch.WithTracer(&tracer{}), func(s *holepunch.Service) error {
+			hps = s
+			return nil
+		}),
 
 		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
 		libp2p.FallbackDefaults,
@@ -217,10 +225,10 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (no
 	wg.Wait()
 
 	if count < 1 {
-		return node, dhtOut, errors.New("unable to bootstrap libp2p node")
+		return hps, dhtOut, errors.New("unable to bootstrap libp2p node")
 	}
 
-	return node, dhtOut, nil
+	return hps, dhtOut, nil
 }
 
 func getFreePort() (int, error) {

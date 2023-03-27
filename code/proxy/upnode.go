@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -106,19 +107,49 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 
 	err = wp.localNode.Connect(context.Background(), addr)
 	if err == nil {
+		curcuit := true
+		for cid, rconn := range wp.mesh.Host.Network().ConnsToPeer(addr.ID) {
+			pp.Println("@conn", cid, rconn.RemoteMultiaddr().String())
+			if !strings.Contains(rconn.RemoteMultiaddr().String(), "p2p-circuit") {
+				pp.Println("@found_direct_connection")
+				curcuit = false
+				break
+			}
+		}
 
-		pp.Println("@remote_addr_before_dial", wp.mesh.Host.Network().ConnsToPeer(addr.ID)[0].RemoteMultiaddr().String())
+		if curcuit {
+			pp.Println("@trying_direct_connect")
 
-		nconn, err := wp.mesh.Host.Network().DialPeer(context.TODO(), addr.ID)
-		if err == nil {
-			pp.Println("@after_dail/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
-			pp.Println("@dial_peer", nconn.RemoteMultiaddr().String())
+			wticker := time.NewTimer(time.Second * 10)
+			doneChan := make(chan struct{}, 1)
+
+			go func() {
+				err := wp.mesh.HolePunchService.DirectConnect(addr.ID)
+				if err != nil {
+					pp.Println("@err_while_direct_connect", err.Error())
+				} else {
+					pp.Println("@direct_connect_success ?")
+				}
+
+				doneChan <- struct{}{}
+			}()
+
+			select {
+			case <-doneChan:
+				wticker.Stop()
+
+			case <-wticker.C:
+				pp.Println("@connect_timeout")
+			}
+
+		} else {
+			pp.Println("@skipping_direct_connection")
 		}
 
 		return &addr, nil
 	}
 
-	pp.Println("@could_not_connect_directly", err.Error())
+	pp.Println("@could_not_connect", err.Error())
 
 	return nil, err
 }
