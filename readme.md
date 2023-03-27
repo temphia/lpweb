@@ -21,6 +21,6 @@ lpweb web-proxy --port=8080 # 8080 is a proxy port, use in browser/networking
 ```
 
 ## TODO
-- [ ] websocket support
-- [ ] bring back DHT, currently it cheats by using etcd discovery for finding peer address and connect with libp2p (DHT was flaky cz new address would take time to propagate 🤷 )
+- [x] websocket support
+- [ ] ~~bring back DHT, currently it cheats by using etcd discovery for finding peer address and connect with libp2p (DHT was flaky cz new address would take time to propagate 🤷 )~~ remove etcd discovery, currently its is used to pass lowercase(hash), save that info in DHT or libp2p gossip
 - [ ] webextension someday 🤞 (browser extension would route <hash>.lpweb traffic through js impl of libp2p hence no need to run seperate proxy)
