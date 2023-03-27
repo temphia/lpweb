@@ -14,7 +14,6 @@ import (
 )
 
 type UpNode struct {
-	webProxy   *WebProxy
 	localNode  host.Host
 	p2pPubId   string
 	addr       *peer.AddrInfo
