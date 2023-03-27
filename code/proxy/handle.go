@@ -25,6 +25,8 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 		panic(err)
 	}
 
+	defer stream.Close()
+
 	out, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		panic(err)
@@ -73,6 +75,7 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 	if err != nil {
 		panic(err)
 	}
+	defer stream.Close()
 
 	pp.Println("@opened_new_stream")
 
@@ -82,6 +85,8 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 		pp.Println("@err_while_hijacking", err.Error())
 		return
 	}
+
+	defer hjconn.Close()
 
 	go func() {
 		pp.Println("@copy_stream/req2stream")
