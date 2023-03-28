@@ -10,10 +10,12 @@ import (
 	"strings"
 
 	"github.com/k0kubun/pp"
+	"github.com/temphia/lpweb/code/core"
 	"github.com/temphia/lpweb/code/core/mesh"
 )
 
 func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
+
 	hash := extractHostHash(r.Host)
 
 	pp.Println("@new_normal_conn", r.Host)
@@ -27,13 +29,16 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 
 	defer stream.Close()
 
+	relay := core.FromRelay(stream)
+	pp.Println("@is_relay", relay)
+
 	out, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		panic(err)
 	}
 
 	pp.Println("@copy_request")
-	pp.Println(io.Copy(stream, bytes.NewBuffer(out)))
+	pp.Println(core.Copy(stream, bytes.NewBuffer(out), relay))
 
 	resp, err := http.ReadResponse(bufio.NewReader(stream), r)
 	if err != nil {
@@ -78,6 +83,8 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 	defer stream.Close()
 
 	pp.Println("@opened_new_stream")
+	relay := core.FromRelay(stream)
+	pp.Println("@is_relay", relay)
 
 	pp.Println("@hijack_success")
 	hjconn, _, err := w.(http.Hijacker).Hijack()
@@ -90,7 +97,7 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 
 	go func() {
 		pp.Println("@copy_stream/req2stream")
-		pp.Println(io.Copy(stream, hjconn))
+		pp.Println(core.Copy(stream, hjconn, relay))
 	}()
 
 	pp.Println("@copy_stream/stream2req")

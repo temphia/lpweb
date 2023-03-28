@@ -9,21 +9,20 @@ import (
 	"net/http/httputil"
 
 	"github.com/gorilla/websocket"
+	"github.com/temphia/lpweb/code/core"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
 func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
-
-	maddr, err := stream.Conn().RemoteMultiaddr().MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
-
-	pp.Println("@new_http_from", string(maddr))
-
 	defer stream.Close()
+
+	relay := core.FromRelay(stream)
+	pp.Println("@is_relay", relay)
+
+	maddr := stream.Conn().RemoteMultiaddr()
+	pp.Println("@new_http_from", maddr.String())
 
 	req, err := http.ReadRequest(bufio.NewReader(stream))
 	if err != nil {
@@ -58,7 +57,7 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 	pp.Println(stream.Write(out))
 
 	pp.Print("@write_body")
-	pp.Println(io.Copy(stream, (bodyBackup)))
+	pp.Println(core.Copy(stream, bodyBackup, relay))
 
 }
 
@@ -73,6 +72,9 @@ var (
 
 func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 	defer stream.Close()
+
+	relay := core.FromRelay(stream)
+	pp.Println("@is_relay", relay)
 
 	tcpServer, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("localhost:%d", ht.tunnelToPort))
 	if err != nil {
@@ -92,5 +94,5 @@ func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 	}()
 
 	pp.Println("@copy2")
-	pp.Println(io.Copy(stream, tconn))
+	pp.Println(core.Copy(stream, tconn, relay))
 }
