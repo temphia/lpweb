@@ -1,0 +1,50 @@
+"TRACER|>" map[string]interface {}{
+  "peerID": "12D3KooWLGc2GBUJK2rvQtUxy3zWhgLg95p2mWed3Fu5v2RwaS4Y",
+}
+"TRACER|>" &holepunch.Event{
+  Timestamp: 1680295081425460270,
+  Peer:      "\x00$\b\x01\x12 \x9bM\xa2\x82\x01\xabG\"N\x15\xdf\xc24\xa7\x19\xb9N\x86\x82\x03\xd5k\xb7m\x1a\xc5\xe8\xb5<\x1f\xb7\x99",
+  Remote:    "\x00$\b\x01\x12 S\x958\xb2\x88˾@\\\x90$DH\xe08\x8d-\xc5\xebAL\xe0\x81\x01\xb0\xec\x7f\x95R\xd5\xf9\xcd",
+  Type:      "EndHolePunch",
+  Evt:       &holepunch.EndHolePunchEvt{
+    Success:      false,
+    EllapsedTime: 5000477083,
+    Error:        "context deadline exceeded",
+  },
+}
+"TRACER|>" map[string]interface {}{
+  "peerID": "12D3KooWLGc2GBUJK2rvQtUxy3zWhgLg95p2mWed3Fu5v2RwaS4Y",
+}
+"TRACER|>" &holepunch.Event{
+  Timestamp: 1680355727869931910,
+  Peer:      "\x00$\b\x01\x12 \x9bM\xa2\x82\x01\xabG\"N\x15\xdf\xc24\xa7\x19\xb9N\x86\x82\x03\xd5k\xb7m\x1a\xc5\xe8\xb5<\x1f\xb7\x99",
+  Remote:    "\x00$\b\x01\x12 =+\xd5P8\xe0s<\xc4\x12\xa9LУ}\x9c;=\b\xc4\xf5iv\xc5J\xf1\xbc\x94,C\xccT",
+  Type:      "ProtocolError",
+  Evt:       &holepunch.ProtocolErrorEvt{
+    Error: "rejecting hole punch request, as we don't have any public addresses",
+  },
+}
+"TRACER|>" map[string]interface {}{
+  "peerID": "12D3KooWLGc2GBUJK2rvQtUxy3zWhgLg95p2mWed3Fu5v2RwaS4Y",
+}
+"TRACER|>" &holepunch.Event{
+  Timestamp: 1680356865872694747,
+  Peer:      "\x00$\b\x01\x12 \x9bM\xa2\x82\x01\xabG\"N\x15\xdf\xc24\xa7\x19\xb9N\x86\x82\x03\xd5k\xb7m\x1a\xc5\xe8\xb5<\x1f\xb7\x99",
+  Remote:    "\x00$\b\x01\x12 l\xbf\xb6\xf4\x10J\n\xe1F\xbc\xf4\x1b\xdd_\xc5\xdbr\x11\xdbT\xb3\".#7\x1e\x89\xc1\xd6Io+",
+  Type:      "ProtocolError",
+  Evt:       &holepunch.ProtocolErrorEvt{
+    Error: "rejecting hole punch request, as we don't have any public addresses",
+  },
+}
+"TRACER|>" map[string]interface {}{
+  "peerID": "12D3KooWLGc2GBUJK2rvQtUxy3zWhgLg95p2mWed3Fu5v2RwaS4Y",
+}
+"TRACER|>" &holepunch.Event{
+  Timestamp: 1680374311031427481,
+  Peer:      "\x00$\b\x01\x12 \x9bM\xa2\x82\x01\xabG\"N\x15\xdf\xc24\xa7\x19\xb9N\x86\x82\x03\xd5k\xb7m\x1a\xc5\xe8\xb5<\x1f\xb7\x99",
+  Remote:    "\x00$\b\x01\x12 \x0e\x98\x96=ӌ\xa2\xee\x8aR\xb5\xe5~K\xf2&\x89ߎ\xe0r\xbc \x9e\x01\xae!|\x04\xebO\xfa",
+  Type:      "ProtocolError",
+  Evt:       &holepunch.ProtocolErrorEvt{
+    Error: "rejecting hole punch request, as we don't have any public addresses",
+  },
+}
