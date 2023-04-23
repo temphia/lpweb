@@ -1,0 +1,68 @@
+project_name: lpweb
+env:
+  - GO111MODULE=on
+builds:
+
+- id: lpweb-darwin-amd64
+  binary: lpweb
+  env:
+    - CGO_ENABLED=1
+    - CC=o64-clang
+    - CXX=o64-clang++
+  main: ./main.go
+  goos:
+    - darwin
+  goarch:
+    - amd64
+- id: lpweb-darwin-arm64
+  binary: lpweb
+  env:
+    - CGO_ENABLED=1
+    - CC=aarch64-apple-darwin21.4-clang
+    - CXX=aarch64-apple-darwin21.4-clang++
+  main: ./main.go
+  goos:
+    - darwin
+  goarch:
+    - arm64
+- id: lpweb-linux
+  binary: lpweb
+  env:
+    - CGO_ENABLED=1
+  main: ./main.go
+  goos:
+    - linux
+  goarch:
+    - amd64
+- id: lpweb-windows-x64
+  ldflags: -buildmode=exe
+  binary: lpweb
+  env:
+    - CGO_ENABLED=1
+    - CC=x86_64-w64-mingw32-gcc
+    - CXX=x86_64-w64-mingw32-g++
+  main: ./main.go
+  goos:
+    - windows
+  goarch:
+    - amd64
+
+archives:
+- format: tar.gz
+  format_overrides:
+    - goos: windows
+      format: zip
+  name_template: "{{ .Binary }}-v{{ .Version }}-{{ .ShortCommit }}-{{ .Os }}-{{ .Arch }}"
+  replacements:
+    amd64: x64
+    arm64: ARM64
+    darwin: macOS
+    linux: Linux
+    windows: Windows
+  # files:
+  # - README.md
+  # - LICENSE
+  allow_different_binary_count: true
+
+snapshot:
+  name_template: SNAPSHOT-{{.ShortCommit}}
