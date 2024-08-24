@@ -105,13 +105,13 @@ func New(keystr string, port int) (*Mesh, error) {
 		fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port),
 	}
 
-	pubIp, err := findPublicIpAddr()
-	if err == nil {
-		pp.Println("@listening_to_public_addrs", pubIp)
+	// pubIp, err := findPublicIpAddr()
+	// if err == nil {
+	// 	pp.Println("@listening_to_public_addrs", pubIp)
 
-		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
-		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
-	}
+	// 	baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
+	// 	baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
+	// }
 
 	hps, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
 	if err != nil {
@@ -121,10 +121,10 @@ func New(keystr string, port int) (*Mesh, error) {
 	host := dh.Host()
 
 	mesh := &Mesh{
-		Host:             host,
-		DHT:              dh,
-		Port:             port,
-		PublicIp:         pubIp,
+		Host: host,
+		DHT:  dh,
+		Port: port,
+		//		PublicIp:         pubIp,
 		ResourceManager:  host.Network().ResourceManager().(*ResourceManager),
 		HolePunchService: hps,
 	}
@@ -183,7 +183,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 		libp2p.Transport(quic.NewTransport),
 		libp2p.EnableRelay(),
 		libp2p.ResourceManager(rm),
-		//		libp2p.ForceReachabilityPublic(),
+		libp2p.ForceReachabilityPublic(),
 
 		libp2p.PrivateNetwork(nil),
 
@@ -193,7 +193,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 		}),
 
 		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
-		libp2p.FallbackDefaults,
+		// libp2p.FallbackDefaults,
 	)
 
 	if err != nil {
