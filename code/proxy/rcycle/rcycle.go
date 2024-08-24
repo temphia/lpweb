@@ -164,7 +164,7 @@ func (rc *RequestCycle) ResetStream() {
 
 }
 
-func (rc *RequestCycle) StreamReadLoop(stream network.Stream) {
+func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 
 	for {
 
@@ -176,7 +176,7 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) {
 
 		err := m.Unmarshal(&rPacket)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		rc.OutsidePacket <- SideChannelPacket{

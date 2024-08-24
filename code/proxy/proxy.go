@@ -17,6 +17,7 @@ import (
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
+	"github.com/temphia/lpweb/code/proxy/rcycle"
 	"github.com/temphia/lpweb/code/wire"
 )
 
@@ -33,7 +34,7 @@ type WebProxy struct {
 
 	requestIdCounter uint32
 
-	requests map[uint32]*OnGoingRequest
+	requests map[uint32]*rcycle.RequestCycle
 	reqMLock sync.Mutex
 }
 
@@ -65,7 +66,7 @@ func NewWebProxy(port int) *WebProxy {
 		proxyPort:        port,
 		upNodes:          make(map[string]*UpNode),
 		requestIdCounter: 0,
-		requests:         make(map[uint32]*OnGoingRequest),
+		requests:         make(map[uint32]*rcycle.RequestCycle),
 		reqMLock:         sync.Mutex{},
 		upnodeLock:       sync.Mutex{},
 
@@ -94,7 +95,7 @@ func NewWebProxy(port int) *WebProxy {
 			return
 		}
 
-		req.outsidePacket <- SideChannelPacket{
+		req.OutsidePacket <- rcycle.SideChannelPacket{
 			Packet:     &packet,
 			FromStream: s,
 		}
