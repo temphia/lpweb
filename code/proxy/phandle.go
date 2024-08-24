@@ -3,6 +3,7 @@ package proxy
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"net/http/httputil"
@@ -53,15 +54,17 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	pp.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
 	pp.Println("addr_len", len(enode.addr.Addrs))
 
-	stream, err := wp.localNode.NewStream(r.Context(), enode.addr.ID, mesh.ProtocolHttp2)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp)
 	if err != nil {
-		panic(err)
+		pp.Println("@err_new_stream", err.Error())
+		w.WriteHeader(http.StatusBadGateway)
+		return
 	}
 
 	pp.Println("@handleHttp2/RequestCycle/4")
 
 	request := &rcycle.RequestCycle{
-		Context:         r.Context(),
+		Context:         context.TODO(),
 		RequestId:       reqId,
 		LocalNode:       wp.localNode,
 		OutsidePacket:   make(chan rcycle.SideChannelPacket, 1),

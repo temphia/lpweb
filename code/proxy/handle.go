@@ -24,10 +24,14 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 		return
 	}
 
+	pp.Println("@handleHttp/1", enode.addr.ID.String())
+
 	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp)
 	if err != nil {
 		panic(err)
 	}
+
+	pp.Println("@handleHttp/2")
 
 	defer stream.Close()
 

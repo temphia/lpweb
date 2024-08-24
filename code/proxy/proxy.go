@@ -137,7 +137,7 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "CONNECT" {
 			wp.handleWS(r, w)
 		} else {
-			wp.handleHttp2(r, w)
+			wp.handleHttp(r, w)
 		}
 
 		return
