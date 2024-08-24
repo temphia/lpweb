@@ -52,7 +52,7 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
-	pp.Println("@resp", string(out))
+	pp.Println("@resp1", string(out))
 
 	pp.Print("@write_head")
 	pp.Println(stream.Write(out))

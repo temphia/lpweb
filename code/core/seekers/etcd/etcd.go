@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/k0kubun/pp"
-	"github.com/tidwall/pretty"
 )
 
 var uuid = "9e7caedb576b1ab1a4d209da31f96389"
@@ -46,18 +45,18 @@ func (p *PubEtcd) Set(hash, addr string) error {
 
 	req.Header.Set("Content-type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	_, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 
-	out, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
+	// out, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	return err
+	// }
 
-	fmt.Print("@resp", string((pretty.Color(pretty.Pretty(out), nil))))
-	fmt.Print("\n")
+	// fmt.Print("@resp2", string((pretty.Color(pretty.Pretty(out), nil))))
+	// fmt.Print("\n")
 
 	return nil
 }
