@@ -77,6 +77,8 @@ func NewWebProxy(port int) *WebProxy {
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp, func(s network.Stream) {
 
+		defer s.Close()
+
 		marsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
 			CoerceUndefToNull: true,
 		}, s)
@@ -98,6 +100,11 @@ func NewWebProxy(port int) *WebProxy {
 		req.OutsidePacket <- rcycle.SideChannelPacket{
 			Packet:     &packet,
 			FromStream: s,
+		}
+
+		err = req.StreamReadLoop(s)
+		if err != nil {
+			panic(err)
 		}
 
 	})
