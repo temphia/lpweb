@@ -1,6 +1,15 @@
 package tunnel
 
 import (
+	"bufio"
+	"bytes"
+	"context"
+	"fmt"
+	"net/http"
+	"net/http/httputil"
+	"sync"
+
+	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/polydawn/refmt/cbor"
 	"github.com/temphia/lpweb/code/proxy/rcycle"
@@ -8,10 +17,13 @@ import (
 )
 
 func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
-	// maddr, err := stream.Conn().RemoteMultiaddr().MarshalJSON()
-	// if err != nil {
-	// 	panic(err)
-	// }
+
+	defer stream.Close()
+
+	maddr := stream.Conn().RemoteMultiaddr().String()
+	pp.Println("@new_http_from", maddr)
+
+	peerId := stream.Conn().RemotePeer()
 
 	unmarsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
 		CoerceUndefToNull: true,
@@ -48,20 +60,42 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 		return
 	}
 
-}
+	request := rcycle.RequestCycle{
+		Context:   context.Background(),
+		RequestId: packet.HttpRequestId,
+		LocalNode: ht.mesh.Host,
 
-/*
+		OutsidePacket:  make(chan rcycle.SideChannelPacket),
+		OutData:        packet.Data,
+		ActiveStream:   stream,
+		TotalFragments: packet.TotalFragments,
+		TargetPeer:     peerId,
 
-maddr, err := stream.Conn().RemoteMultiaddr().MarshalJSON()
+		DonePacketFrags: make(map[uint32]bool),
+		DoneInDataChan:  make(chan uint32),
+		InData:          nil,
+
+		CloseChan: make(chan struct{}),
+	}
+
+	ht.rcLock.Lock()
+	ht.requestCycles[packet.HttpRequestId] = &request
+	ht.rcLock.Unlock()
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+
+	go request.ControlLoop(&wg, false)
+
+	err = request.StreamReadLoop(stream)
 	if err != nil {
 		panic(err)
 	}
 
-	pp.Println("@new_http_from", string(maddr))
+	reader := bytes.NewBuffer(request.InData)
 
-	defer stream.Close()
-
-	req, err := http.ReadRequest(bufio.NewReader(stream))
+	req, err := http.ReadRequest(bufio.NewReader(reader))
 	if err != nil {
 		panic(err)
 	}
@@ -80,20 +114,17 @@ maddr, err := stream.Conn().RemoteMultiaddr().MarshalJSON()
 
 	defer resp.Body.Close()
 
-	bodyBackup := resp.Body
-	resp.Body = nil
-
-	out, err := httputil.DumpResponse(resp, false)
+	out, err := httputil.DumpResponse(resp, true)
 	if err != nil {
 		panic(err)
 	}
 
-	pp.Println("@resp", string(out))
+	request.OutData = out
 
-	pp.Print("@write_head")
-	pp.Println(stream.Write(out))
+	err = request.StreamWriteLoop()
+	if err != nil {
+		pp.Println("@err/StreamWriteLoop", err.Error())
+	}
 
-	pp.Print("@write_body")
-	pp.Println(io.Copy(stream, (bodyBackup)))
-
-*/
+	wg.Wait()
+}

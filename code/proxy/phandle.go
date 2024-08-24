@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bufio"
 	"bytes"
 	"io"
 	"net/http"
@@ -74,22 +75,46 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	go request.ControlLoop(&wg)
+	go request.ControlLoop(&wg, true)
 
 	err = request.StreamWriteLoop()
 	if err != nil {
-		panic(err)
+		pp.Println("@err/StreamWriteLoop", err.Error())
 	}
 
 	err = request.StreamReadLoop(stream)
 	if err != nil {
-		panic(err)
+		pp.Println("@err/StreamReadLoop", err.Error())
 	}
 
 	request.Close()
 
 	wg.Wait()
 
-	io.Copy(w, bytes.NewBuffer(request.InData))
+	reader := bytes.NewReader(request.InData)
+	resp, err := http.ReadResponse(bufio.NewReader(reader), r)
+	if err != nil {
+		pp.Println("@err/ReadResponse", err.Error())
+		panic(err)
+	}
+
+	defer resp.Body.Close()
+
+	header := w.Header()
+	for k, v := range resp.Header {
+		header[k] = v
+	}
+
+	w.WriteHeader(resp.StatusCode)
+
+	pp.Println("@write_response")
+	if resp.Header.Get("Content-Length") == "" && header.Get("Transfer-Encoding") != "chunked" && resp.Header.Get("Content-Type") == "" {
+		pp.Println("@forcing_chunked_mode")
+		header.Set("Transfer-Encoding", "chunked")
+		pp.Println(io.Copy(httputil.NewChunkedWriter(w), reader))
+
+	} else {
+		io.Copy(w, reader)
+	}
 
 }

@@ -40,7 +40,7 @@ type RequestCycle struct {
 	CloseChan chan struct{}
 }
 
-func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup) {
+func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup, isRequestType bool) {
 
 	closables := make([]io.Closer, 0)
 
@@ -69,8 +69,10 @@ func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup) {
 
 		}
 
-		if rc.doneFragmentRecv() {
-			break
+		if isRequestType {
+			if rc.doneFragmentRecv() {
+				break
+			}
 		}
 
 	}
@@ -320,20 +322,49 @@ func (rc *RequestCycle) processPacket(rPacket wire.Packet, stream network.Stream
 
 		}
 
-		packet := &wire.Packet{
-			PacketType:     wire.FragmentResend,
-			HttpRequestId:  rc.RequestId,
-			FragmentId:     0,
-			TotalFragments: rc.TotalFragments,
-			Data:           []byte(pendingIds.String()),
+		if len(pendingIds.String()) != 0 {
+
+			packet := &wire.Packet{
+				PacketType:     wire.FragmentResend,
+				HttpRequestId:  rc.RequestId,
+				FragmentId:     0,
+				TotalFragments: rc.TotalFragments,
+				Data:           []byte(pendingIds.String()),
+			}
+
+			pout, err := cbor.Marshal(packet)
+			if err != nil {
+				panic(err)
+			}
+
+			io.Copy(stream, bytes.NewBuffer(pout))
+		} else {
+
+			paket := &wire.Packet{
+				PacketType:     wire.FragmentEnd,
+				HttpRequestId:  rc.RequestId,
+				FragmentId:     0,
+				TotalFragments: rc.TotalFragments,
+				Data:           nil,
+			}
+
+			pout, err := cbor.Marshal(paket)
+			if err != nil {
+				panic(err)
+			}
+
+			io.Copy(stream, bytes.NewBuffer(pout))
+
 		}
 
-		pout, err := cbor.Marshal(packet)
-		if err != nil {
-			panic(err)
-		}
+		return
 
-		io.Copy(stream, bytes.NewBuffer(pout))
+	}
+
+	if rPacket.PacketType == wire.FragmentEnd {
+		rc.CloseChan <- struct{}{}
+
+		return
 	}
 
 }
