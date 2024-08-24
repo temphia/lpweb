@@ -269,7 +269,7 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 			return err
 		}
 
-		pp.Println("@StreamReadLoop/4")
+		pp.Println("@StreamReadLoop/4", rPacket.PacketType)
 
 		rc.OutsidePacket <- SideChannelPacket{
 			Packet:     &rPacket,
