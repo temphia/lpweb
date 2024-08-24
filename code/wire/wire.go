@@ -6,7 +6,6 @@ type Packet struct {
 	FragmentId     uint32 `cbor:"fid"`
 	TotalFragments uint32 `cbor:"total_frags"`
 	Data           []byte `cbor:"data"`
-	Direction      uint8  `cbor:"direction"`
 }
 
 const (
@@ -16,11 +15,6 @@ const (
 	FragmentEnd    = "FRAG_END"    // when all fragments are received, send this packet that ends that request or response
 	PING           = "PING"
 	PONG           = "PONG"
-)
-
-const (
-	DirectionRequest = iota
-	DirectionResponse
 )
 
 const (

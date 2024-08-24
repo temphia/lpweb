@@ -114,7 +114,6 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 			FragmentId:     fragmentId,
 			TotalFragments: totalFragments,
 			Data:           out[startOffset:endOffset],
-			Direction:      wire.DirectionRequest,
 		}
 
 		pout, err := cbor.Marshal(packet)
@@ -137,7 +136,6 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 		FragmentId:     0,
 		TotalFragments: totalFragments,
 		Data:           nil,
-		Direction:      wire.DirectionRequest,
 	}
 
 	tbyte, err := cbor.Marshal(tallyPacket)
@@ -210,7 +208,6 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 					FragmentId:     id,
 					TotalFragments: totalFragments,
 					Data:           out[startOffset:endOffset],
-					Direction:      wire.DirectionRequest,
 				}
 
 				pout, err := cbor.Marshal(packet)
@@ -277,7 +274,6 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 				FragmentId:     0,
 				TotalFragments: totalFragments,
 				Data:           []byte(pendingIds.String()),
-				Direction:      wire.DirectionRequest,
 			}
 
 			pout, err := cbor.Marshal(packet)
