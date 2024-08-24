@@ -10,11 +10,14 @@ import (
 	"github.com/elazarl/goproxy"
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/polydawn/refmt/cbor"
 
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
+	"github.com/temphia/lpweb/code/wire"
 )
 
 type WebProxy struct {
@@ -27,6 +30,11 @@ type WebProxy struct {
 	upnodeLock sync.Mutex
 
 	proxyPort int
+
+	requestIdCounter uint32
+
+	requests map[uint32]*OnGoingRequest
+	reqMLock sync.Mutex
 }
 
 func NewWebProxy(port int) *WebProxy {
@@ -51,17 +59,47 @@ func NewWebProxy(port int) *WebProxy {
 	seeker := etcd.New(conf.UUID)
 
 	instance := &WebProxy{
-		mesh:       m,
-		localNode:  m.Host,
-		proxy:      proxy,
-		proxyPort:  port,
-		upNodes:    make(map[string]*UpNode),
-		upnodeLock: sync.Mutex{},
+		mesh:             m,
+		localNode:        m.Host,
+		proxy:            proxy,
+		proxyPort:        port,
+		upNodes:          make(map[string]*UpNode),
+		requestIdCounter: 0,
+		requests:         make(map[uint32]*OnGoingRequest),
+		reqMLock:         sync.Mutex{},
+		upnodeLock:       sync.Mutex{},
 
 		seekers: []seekers.Seeker{
 			seeker,
 		},
 	}
+
+	m.Host.SetStreamHandler(mesh.ProtocolHttp, func(s network.Stream) {
+
+		marsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
+			CoerceUndefToNull: true,
+		}, s)
+
+		packet := wire.Packet{}
+		err := marsheler.Unmarshal(&packet)
+		if err != nil {
+			panic(err)
+		}
+
+		instance.reqMLock.Lock()
+		req := instance.requests[packet.HttpRequestId]
+		instance.reqMLock.Unlock()
+
+		if req == nil {
+			return
+		}
+
+		req.outsidePacket <- SideChannelPacket{
+			Packet:     &packet,
+			FromStream: s,
+		}
+
+	})
 
 	return instance
 }
