@@ -276,6 +276,11 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 			FromStream: nil,
 		}
 
+		if rc.doneFragmentRecv() {
+			pp.Println("@StreamReadLoop/doneFragmentRecv/6")
+			return nil
+		}
+
 		pp.Println("@StreamReadLoop/5")
 
 	}
