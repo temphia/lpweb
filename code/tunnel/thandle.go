@@ -89,13 +89,17 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 
 	err = request.StreamReadLoop(stream)
 	if err != nil {
+		pp.Println("@err/StreamReadLoop", err.Error())
 		panic(err)
 	}
+
+	pp.Println("@read_data", string(request.InData))
 
 	reader := bytes.NewBuffer(request.InData)
 
 	req, err := http.ReadRequest(bufio.NewReader(reader))
 	if err != nil {
+		pp.Println("@err/ReadRequest", err.Error())
 		panic(err)
 	}
 
