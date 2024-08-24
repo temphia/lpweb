@@ -163,13 +163,13 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 		pp.Println("@StreamWriteLoop/11")
 
-		_, err = io.Copy(rc.ActiveStream, bytes.NewReader(pout))
+		written, err := io.Copy(rc.ActiveStream, bytes.NewReader(pout))
 		if err != nil {
 			writeErrorCount++
 			continue
 		}
 
-		pp.Println("@StreamWriteLoop/12")
+		pp.Println("@StreamWriteLoop/12", written)
 
 		fragmentId++
 	}
@@ -215,7 +215,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 		pp.Println("@StreamWriteLoop/17")
 
-		_, err = io.Copy(rc.ActiveStream, bytes.NewBuffer(tbyte))
+		_, err = io.Copy(rc.ActiveStream, bytes.NewReader(tbyte))
 		if err != nil {
 			writeErrorCount++
 			pp.Println("@StreamWriteLoop/19/err", err.Error())
