@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
+	"sync"
 	"sync/atomic"
 
 	"github.com/k0kubun/pp"
@@ -57,6 +58,7 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 		DonePacketFrags: make(map[uint32]bool),
 		DoneInDataChan:  make(chan uint32, 1),
 		InData:          nil,
+		CloseChan:       make(chan struct{}),
 	}
 
 	wp.reqMLock.Lock()
@@ -69,14 +71,24 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 
 	}()
 
-	request.ControlLoop()
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-	request.StreamWriteLoop()
+	go request.ControlLoop(&wg)
+
+	err = request.StreamWriteLoop()
+	if err != nil {
+		panic(err)
+	}
 
 	err = request.StreamReadLoop(stream)
 	if err != nil {
 		panic(err)
 	}
+
+	request.Close()
+
+	wg.Wait()
 
 	io.Copy(w, bytes.NewBuffer(request.InData))
 

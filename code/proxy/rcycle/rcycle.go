@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -35,14 +36,23 @@ type RequestCycle struct {
 	DonePacketFrags map[uint32]bool
 	DoneInDataChan  chan uint32
 	InData          []byte
+
+	CloseChan chan struct{}
 }
 
-func (rc *RequestCycle) ControlLoop() {
+func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup) {
+
+	defer wg.Done()
 
 	for {
 		select {
 		case outreq := <-rc.OutsidePacket:
 			rc.processPacket(*outreq.Packet, outreq.FromStream)
+
+		case <-rc.Context.Done():
+			return
+		case <-rc.CloseChan:
+			return
 		default:
 
 		}
@@ -53,6 +63,10 @@ func (rc *RequestCycle) ControlLoop() {
 
 	}
 
+}
+
+func (rc *RequestCycle) Close() {
+	rc.CloseChan <- struct{}{}
 }
 
 func (rc *RequestCycle) StreamWriteLoop() error {
