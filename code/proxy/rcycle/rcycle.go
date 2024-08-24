@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/fxamacker/cbor"
 	"github.com/k0kubun/pp"
@@ -174,6 +175,8 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 		fragmentId++
 	}
 
+	time.Sleep(time.Second)
+
 	pp.Println("@StreamWriteLoop/13")
 
 	tallyPacket := &wire.Packet{
@@ -270,7 +273,7 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 			return err
 		}
 
-		pp.Println("@StreamReadLoop/4", rPacket.PacketType)
+		pp.Println("@StreamReadLoop/4", rPacket)
 
 		rc.OutsidePacket <- SideChannelPacket{
 			Packet:     &rPacket,
