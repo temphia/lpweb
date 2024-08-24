@@ -75,7 +75,7 @@ func NewWebProxy(port int) *WebProxy {
 		},
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolHttp, func(s network.Stream) {
+	m.Host.SetStreamHandler(mesh.ProtocolHttp2, func(s network.Stream) {
 
 		marsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
 			CoerceUndefToNull: true,
