@@ -100,17 +100,20 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	core.PrintPeerAddr(addr)
 
 	daddr, err := wp.getDHTAddrs(addr.ID)
-	if err == nil {
-		core.PrintPeerAddr(addr)
-		// combine and deduplicate
-		daddr.Addrs = append(daddr.Addrs, addr.Addrs...)
-		addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
+	if err != nil {
+		pp.Println("@err_getting_dht_addrs", err.Error())
+		return nil, err
 	}
 
-	pp.Println("@final_address/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
+	core.PrintPeerAddr(addr)
+	// combine and deduplicate
+	daddr.Addrs = append(daddr.Addrs, addr.Addrs...)
+	addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
+
+	//	pp.Println("@final_address/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
 	core.PrintPeerAddr(addr)
 
-	err = wp.localNode.Connect(context.Background(), addr)
+	err = wp.localNode.Connect(context.Background(), daddr)
 	if err == nil {
 		curcuit := true
 		for cid, rconn := range wp.mesh.Host.Network().ConnsToPeer(addr.ID) {

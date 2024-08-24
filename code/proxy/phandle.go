@@ -51,6 +51,7 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	reqId := atomic.AddUint32(&wp.requestIdCounter, 1)
 
 	pp.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
+	pp.Println("addr_len", len(enode.addr.Addrs))
 
 	stream, err := wp.localNode.NewStream(r.Context(), enode.addr.ID, mesh.ProtocolHttp2)
 	if err != nil {
@@ -76,6 +77,7 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 
 	wp.reqMLock.Lock()
 	wp.requests[reqId] = request
+	wp.reqMLock.Unlock()
 
 	defer func() {
 		wp.reqMLock.Lock()
