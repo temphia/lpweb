@@ -1,7 +1,6 @@
 package rcycle
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -257,14 +256,22 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 
 	pp.Println("@StreamReadLoop/1")
 
+	buf := make([]byte, 4096)
+
 	for {
 
-		out, err := io.ReadAll(bufio.NewReader(stream))
+		n, err := stream.Read(buf)
 		if err != nil {
+			pp.Println("@err/Read", err.Error())
 			return err
 		}
 
-		pp.Println("[GOT] |>", string(out))
+		pp.Println("[GOT] |>", string(buf[:n]))
+
+		// out, err := io.ReadAll()
+		// if err != nil {
+		// 	return err
+		// }
 
 		// pp.Println("@StreamReadLoop/2")
 
