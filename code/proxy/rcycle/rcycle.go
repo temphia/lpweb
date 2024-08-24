@@ -176,7 +176,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 	pp.Println("@StreamWriteLoop/13")
 
 	tallyPacket := &wire.Packet{
-		PacketType:     wire.FragmentSend,
+		PacketType:     wire.FragmentTally,
 		HttpRequestId:  rc.RequestId,
 		FragmentId:     0,
 		TotalFragments: rc.TotalFragments,
