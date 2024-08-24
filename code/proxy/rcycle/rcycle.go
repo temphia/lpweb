@@ -157,12 +157,13 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 		pout, err := cbor.Marshal(packet, cbor.EncOptions{})
 		if err != nil {
+			pp.Println("@StreamWriteLoop/err_err", err.Error())
 			panic(err)
 		}
 
 		pp.Println("@StreamWriteLoop/11")
 
-		_, err = io.Copy(rc.ActiveStream, bytes.NewBuffer(pout))
+		_, err = io.Copy(rc.ActiveStream, bytes.NewReader(pout))
 		if err != nil {
 			writeErrorCount++
 			continue
