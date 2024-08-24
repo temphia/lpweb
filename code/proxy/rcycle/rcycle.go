@@ -9,11 +9,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/fxamacker/cbor"
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/polydawn/refmt/cbor"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/wire"
 )
@@ -146,7 +146,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 		pp.Println("@StreamWriteLoop/9")
 
-		packet := wire.Packet{
+		packet := &wire.Packet{
 			PacketType:     wire.FragmentSend,
 			HttpRequestId:  rc.RequestId,
 			FragmentId:     fragmentId,
@@ -156,7 +156,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 		pp.Println("@StreamWriteLoop/10")
 
-		pout, err := cbor.Marshal(packet)
+		pout, err := cbor.Marshal(packet, cbor.EncOptions{})
 		if err != nil {
 			panic(err)
 		}
@@ -176,7 +176,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 	pp.Println("@StreamWriteLoop/13")
 
-	tallyPacket := wire.Packet{
+	tallyPacket := &wire.Packet{
 		PacketType:     wire.FragmentSend,
 		HttpRequestId:  rc.RequestId,
 		FragmentId:     0,
@@ -186,7 +186,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 	pp.Println("@StreamWriteLoop/14")
 
-	tbyte, err := cbor.Marshal(tallyPacket)
+	tbyte, err := cbor.Marshal(tallyPacket, cbor.EncOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -257,13 +257,11 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 
 		rPacket := wire.Packet{}
 
-		m := cbor.NewUnmarshaller(cbor.DecodeOptions{
-			CoerceUndefToNull: true,
-		}, stream)
+		m := cbor.NewDecoder(stream)
 
 		pp.Println("@StreamReadLoop/3")
 
-		err := m.Unmarshal(&rPacket)
+		err := m.Decode(&rPacket)
 		if err != nil {
 			return err
 		}
@@ -346,7 +344,7 @@ func (rc *RequestCycle) processPacket(rPacket wire.Packet, stream network.Stream
 
 			pp.Println("@processPacket/7")
 
-			pout, err := cbor.Marshal(packet)
+			pout, err := cbor.Marshal(packet, cbor.EncOptions{})
 			if err != nil {
 				panic(err)
 			}
@@ -441,7 +439,7 @@ func (rc *RequestCycle) processPacket(rPacket wire.Packet, stream network.Stream
 				Data:           []byte(pendingIds.String()),
 			}
 
-			pout, err := cbor.Marshal(packet)
+			pout, err := cbor.Marshal(packet, cbor.EncOptions{})
 			if err != nil {
 				panic(err)
 			}
@@ -459,7 +457,7 @@ func (rc *RequestCycle) processPacket(rPacket wire.Packet, stream network.Stream
 				Data:           nil,
 			}
 
-			pout, err := cbor.Marshal(paket)
+			pout, err := cbor.Marshal(paket, cbor.EncOptions{})
 			if err != nil {
 				panic(err)
 			}
