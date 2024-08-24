@@ -258,34 +258,41 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 
 	for {
 
-		pp.Println("@StreamReadLoop/2")
-
-		rPacket := wire.Packet{}
-
-		m := cbor.NewDecoder(stream)
-
-		pp.Println("@StreamReadLoop/3")
-
-		err := m.Decode(&rPacket)
+		out, err := io.ReadAll(stream)
 		if err != nil {
-			pp.Println("@StreamReadLoop/err_err", err.Error())
-
 			return err
 		}
 
-		pp.Println("@StreamReadLoop/4", rPacket)
+		pp.Println("[GOT] |>", string(out))
 
-		rc.OutsidePacket <- SideChannelPacket{
-			Packet:     &rPacket,
-			FromStream: nil,
-		}
+		// pp.Println("@StreamReadLoop/2")
 
-		if rc.doneFragmentRecv() {
-			pp.Println("@StreamReadLoop/doneFragmentRecv/6")
-			return nil
-		}
+		// rPacket := wire.Packet{}
 
-		pp.Println("@StreamReadLoop/5")
+		// m := cbor.NewDecoder(stream)
+
+		// pp.Println("@StreamReadLoop/3")
+
+		// err := m.Decode(&rPacket)
+		// if err != nil {
+		// 	pp.Println("@StreamReadLoop/err_err", err.Error())
+
+		// 	return err
+		// }
+
+		// pp.Println("@StreamReadLoop/4", rPacket)
+
+		// rc.OutsidePacket <- SideChannelPacket{
+		// 	Packet:     &rPacket,
+		// 	FromStream: nil,
+		// }
+
+		// if rc.doneFragmentRecv() {
+		// 	pp.Println("@StreamReadLoop/doneFragmentRecv/6")
+		// 	return nil
+		// }
+
+		// pp.Println("@StreamReadLoop/5")
 
 	}
 
