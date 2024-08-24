@@ -27,6 +27,10 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	pp.Println("@new_normal_conn", r.Host)
 
 	enode := wp.getExitNode(hash)
+	if enode == nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 
 	pp.Println("@handleHttp2/dump_request/1")
 
@@ -46,7 +50,7 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 
 	reqId := atomic.AddUint32(&wp.requestIdCounter, 1)
 
-	pp.Println("@handleHttp2/new_stream/3")
+	pp.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
 
 	stream, err := wp.localNode.NewStream(r.Context(), enode.addr.ID, mesh.ProtocolHttp2)
 	if err != nil {

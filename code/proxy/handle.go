@@ -19,6 +19,10 @@ func (wp *WebProxy) handleHttp(r *http.Request, w http.ResponseWriter) {
 	pp.Println("@new_normal_conn", r.Host)
 
 	enode := wp.getExitNode(hash)
+	if enode == nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 
 	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp)
 	if err != nil {
@@ -70,6 +74,10 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 	pp.Println("@accepted_connect")
 
 	enode := wp.getExitNode(hash)
+	if enode == nil {
+		w.WriteHeader(http.StatusBadGateway)
+		return
+	}
 
 	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolWS)
 	if err != nil {

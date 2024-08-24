@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -89,6 +90,10 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 		}
 
 		addr.Addrs = append(addr.Addrs, maybeAddr.Addrs...)
+	}
+
+	if len(addr.Addrs) == 0 {
+		return nil, fmt.Errorf("no addresses found for %s", target)
 	}
 
 	pp.Println("@found_sth_from_seekers")

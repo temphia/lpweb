@@ -71,6 +71,10 @@ func (p *PubEtcd) Get(hash string) (string, error) {
 		return "", err
 	}
 
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("status code %d", resp.StatusCode)
+	}
+
 	out, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
