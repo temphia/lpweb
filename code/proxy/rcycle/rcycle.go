@@ -75,7 +75,6 @@ func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup, isRequestType bool) {
 		case <-rc.CloseChan:
 			pp.Println("@ControlLoop/CloseChan/5")
 			return
-		default:
 
 		}
 
