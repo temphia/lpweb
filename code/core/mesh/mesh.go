@@ -172,7 +172,9 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 
 	// Create libp2p node
 	node, err := libp2p.New(
-		libp2p.UserAgent("libp2p/alpha1"),
+		libp2p.EnableAutoNATv2(),
+		libp2p.UserAgent("lpweb"),
+		libp2p.EnableNATService(),
 		libp2p.ListenAddrStrings(baseAddrs...),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
@@ -181,7 +183,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 		libp2p.Transport(quic.NewTransport),
 		libp2p.EnableRelay(),
 		libp2p.ResourceManager(rm),
-		libp2p.ForceReachabilityPrivate(),
+		//		libp2p.ForceReachabilityPublic(),
 
 		libp2p.PrivateNetwork(nil),
 
