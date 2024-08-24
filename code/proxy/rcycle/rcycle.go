@@ -202,10 +202,12 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 
 		if counter > 5 {
 			rc.ActiveStream.Close()
+			pp.Println("@counter>5/timeout")
 			return errors.New("timeout 2")
 		}
 
 		if writeErrorCount > 2 {
+			pp.Println("@writeErrorCount>2")
 			rc.ResetStream()
 			writeErrorCount = 0
 		}
@@ -215,7 +217,7 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 		_, err = io.Copy(rc.ActiveStream, bytes.NewBuffer(tbyte))
 		if err != nil {
 			writeErrorCount++
-			pp.Println("@StreamWriteLoop/19", err.Error())
+			pp.Println("@StreamWriteLoop/19/err", err.Error())
 			continue
 		}
 
@@ -262,6 +264,8 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 
 		err := m.Decode(&rPacket)
 		if err != nil {
+			pp.Println("@StreamReadLoop/err_err", err.Error())
+
 			return err
 		}
 
