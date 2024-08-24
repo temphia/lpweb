@@ -263,6 +263,6 @@ func findPublicIpAddr() (string, error) {
 type tracer struct{}
 
 func (t *tracer) Trace(evt *holepunch.Event) {
-	pp.Println("TRACER|>", evt.Peer.Loggable())
-	pp.Println("TRACER|>", evt)
+	// pp.Println("TRACER|>", evt.Peer.Loggable())
+	// pp.Println("TRACER|>", evt)
 }

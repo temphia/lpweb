@@ -28,12 +28,16 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 
 	enode := wp.getExitNode(hash)
 
+	pp.Println("@handleHttp2/dump_request/1")
+
 	out, err := httputil.DumpRequest(r, true)
 	if err != nil {
 		panic(err)
 	}
 
 	// count no of fragments needed bashed on out size
+
+	pp.Println("@handleHttp2/calc_fragments/2")
 
 	totalFragments := uint32(len(out) / wire.PacketFragmentationSize)
 	if len(out)%wire.PacketFragmentationSize != 0 {
@@ -42,10 +46,14 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 
 	reqId := atomic.AddUint32(&wp.requestIdCounter, 1)
 
+	pp.Println("@handleHttp2/new_stream/3")
+
 	stream, err := wp.localNode.NewStream(r.Context(), enode.addr.ID, mesh.ProtocolHttp2)
 	if err != nil {
 		panic(err)
 	}
+
+	pp.Println("@handleHttp2/RequestCycle/4")
 
 	request := &rcycle.RequestCycle{
 		Context:         r.Context(),
@@ -75,17 +83,25 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
+	pp.Println("@handleHttp2/ControlLoop/5")
+
 	go request.ControlLoop(&wg, true)
+
+	pp.Println("@handleHttp2/StreamWriteLoop/6")
 
 	err = request.StreamWriteLoop()
 	if err != nil {
 		pp.Println("@err/StreamWriteLoop", err.Error())
 	}
 
+	pp.Println("@handleHttp2/ControlLoop/7")
+
 	err = request.StreamReadLoop(stream)
 	if err != nil {
 		pp.Println("@err/StreamReadLoop", err.Error())
 	}
+
+	pp.Println("@handleHttp2/ControlLoop/8")
 
 	request.Close()
 
