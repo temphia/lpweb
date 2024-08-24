@@ -54,7 +54,7 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	pp.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
 	pp.Println("addr_len", len(enode.addr.Addrs))
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp2)
 	if err != nil {
 		pp.Println("@err_new_stream", err.Error())
 		w.WriteHeader(http.StatusBadGateway)

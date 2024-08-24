@@ -14,7 +14,6 @@ require (
 	github.com/libp2p/go-libp2p-kad-dht v0.26.1
 	github.com/multiformats/go-multiaddr v0.13.0
 	github.com/pkg/errors v0.9.1
-	github.com/polydawn/refmt v0.89.0
 	github.com/tidwall/gjson v1.17.3
 	github.com/tidwall/pretty v1.2.1
 )
@@ -108,6 +107,7 @@ require (
 	github.com/pion/turn/v2 v2.1.6 // indirect
 	github.com/pion/webrtc/v3 v3.3.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/polydawn/refmt v0.89.0 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect

@@ -11,7 +11,6 @@ import (
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/polydawn/refmt/cbor"
 
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
@@ -19,6 +18,8 @@ import (
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
 	"github.com/temphia/lpweb/code/proxy/rcycle"
 	"github.com/temphia/lpweb/code/wire"
+
+	"github.com/fxamacker/cbor"
 )
 
 type WebProxy struct {
@@ -77,12 +78,11 @@ func NewWebProxy(port int) *WebProxy {
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp2, func(s network.Stream) {
 
-		marsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
-			CoerceUndefToNull: true,
-		}, s)
-
+		m := cbor.NewDecoder(s)
 		packet := wire.Packet{}
-		err := marsheler.Unmarshal(&packet)
+
+		err := m.Decode(&packet)
+
 		if err != nil {
 			pp.Println("@err_unmarshal", err.Error())
 			s.Close()

@@ -11,7 +11,9 @@ import (
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/polydawn/refmt/cbor"
+
+	"github.com/fxamacker/cbor"
+
 	"github.com/temphia/lpweb/code/proxy/rcycle"
 	"github.com/temphia/lpweb/code/wire"
 )
@@ -25,13 +27,10 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 
 	peerId := stream.Conn().RemotePeer()
 
-	unmarsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
-		CoerceUndefToNull: true,
-	}, stream)
-
+	um := cbor.NewDecoder(stream)
 	packet := wire.Packet{}
 
-	err := unmarsheler.Unmarshal(&packet)
+	err := um.Decode(&packet)
 	if err != nil {
 		panic(err)
 	}
