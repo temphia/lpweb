@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -12,6 +13,7 @@ import (
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
+	"github.com/temphia/lpweb/code/proxy/rcycle"
 )
 
 type HttpTunnel struct {
@@ -19,6 +21,9 @@ type HttpTunnel struct {
 	tunnelToPort int
 	localNode    host.Host
 	seekers      []seekers.Seeker
+
+	requestCycles map[uint32]*rcycle.RequestCycle
+	rcLock        sync.Mutex
 }
 
 func NewHttpTunnel(port int) *HttpTunnel {
@@ -37,13 +42,16 @@ func NewHttpTunnel(port int) *HttpTunnel {
 	seeker := etcd.New(conf.UUID)
 
 	instance := &HttpTunnel{
-		mesh:         m,
-		localNode:    m.Host,
-		tunnelToPort: port,
-		seekers:      []seekers.Seeker{seeker},
+		mesh:          m,
+		localNode:     m.Host,
+		tunnelToPort:  port,
+		seekers:       []seekers.Seeker{seeker},
+		requestCycles: make(map[uint32]*rcycle.RequestCycle),
+		rcLock:        sync.Mutex{},
 	}
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp, instance.streamHandleHttp)
+	m.Host.SetStreamHandler(mesh.ProtocolHttp2, instance.streamHandleHttp2)
 	m.Host.SetStreamHandler(mesh.ProtocolWS, instance.streamHandleWS)
 
 	servHost := fmt.Sprintf("http://%s.lpweb", strings.ToLower(m.Host.ID().String()))

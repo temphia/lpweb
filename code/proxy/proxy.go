@@ -77,8 +77,6 @@ func NewWebProxy(port int) *WebProxy {
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp, func(s network.Stream) {
 
-		defer s.Close()
-
 		marsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
 			CoerceUndefToNull: true,
 		}, s)
@@ -86,7 +84,9 @@ func NewWebProxy(port int) *WebProxy {
 		packet := wire.Packet{}
 		err := marsheler.Unmarshal(&packet)
 		if err != nil {
-			panic(err)
+			pp.Println("@err_unmarshal", err.Error())
+			s.Close()
+			return
 		}
 
 		instance.reqMLock.Lock()
@@ -94,6 +94,8 @@ func NewWebProxy(port int) *WebProxy {
 		instance.reqMLock.Unlock()
 
 		if req == nil {
+			pp.Println("@err_no_req_found", packet.HttpRequestId)
+			s.Close()
 			return
 		}
 
@@ -104,7 +106,8 @@ func NewWebProxy(port int) *WebProxy {
 
 		err = req.StreamReadLoop(s)
 		if err != nil {
-			panic(err)
+			pp.Println("@err_stream_read", err.Error())
+			s.Close()
 		}
 
 	})

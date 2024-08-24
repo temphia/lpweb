@@ -42,12 +42,24 @@ type RequestCycle struct {
 
 func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup) {
 
-	defer wg.Done()
+	closables := make([]io.Closer, 0)
+
+	defer func() {
+
+		for _, closable := range closables {
+			closable.Close()
+		}
+
+		wg.Done()
+	}()
 
 	for {
 		select {
 		case outreq := <-rc.OutsidePacket:
 			rc.processPacket(*outreq.Packet, outreq.FromStream)
+			if outreq.FromStream != nil {
+				closables = append(closables, outreq.FromStream)
+			}
 
 		case <-rc.Context.Done():
 			return
@@ -67,6 +79,7 @@ func (rc *RequestCycle) ControlLoop(wg *sync.WaitGroup) {
 
 func (rc *RequestCycle) Close() {
 	rc.CloseChan <- struct{}{}
+	rc.ActiveStream.Close()
 }
 
 func (rc *RequestCycle) StreamWriteLoop() error {

@@ -2,6 +2,9 @@ package tunnel
 
 import (
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/polydawn/refmt/cbor"
+	"github.com/temphia/lpweb/code/proxy/rcycle"
+	"github.com/temphia/lpweb/code/wire"
 )
 
 func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
@@ -10,16 +13,40 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 	// 	panic(err)
 	// }
 
-	// unmarsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
-	// 	CoerceUndefToNull: true,
-	// }, stream)
+	unmarsheler := cbor.NewUnmarshaller(cbor.DecodeOptions{
+		CoerceUndefToNull: true,
+	}, stream)
 
-	// packet := wire.Packet{}
+	packet := wire.Packet{}
 
-	// err = unmarsheler.Unmarshal(&packet)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	err := unmarsheler.Unmarshal(&packet)
+	if err != nil {
+		panic(err)
+	}
+
+	if packet.PacketType != wire.FragmentSend {
+
+		if packet.HttpRequestId == 0 {
+			stream.Close()
+			return
+		}
+
+		ht.rcLock.Lock()
+		request := ht.requestCycles[packet.HttpRequestId]
+		ht.rcLock.Unlock()
+
+		if request == nil {
+			stream.Close()
+			return
+		}
+
+		request.OutsidePacket <- rcycle.SideChannelPacket{
+			Packet:     &packet,
+			FromStream: stream,
+		}
+
+		return
+	}
 
 }
 
