@@ -171,11 +171,14 @@ func (rc *RequestCycle) StreamWriteLoop() error {
 		}
 
 		pp.Println("@StreamWriteLoop/12", written)
+		pp.Println("@StreamWriteLoop/[1]", string(pout))
+
+		//		io.Copy(rc.ActiveStream, bytes.NewReader(pout))
 
 		fragmentId++
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Hour)
 
 	pp.Println("@StreamWriteLoop/13")
 
@@ -256,7 +259,7 @@ func (rc *RequestCycle) StreamReadLoop(stream network.Stream) error {
 
 	pp.Println("@StreamReadLoop/1")
 
-	buf := make([]byte, 4096)
+	buf := make([]byte, 256)
 
 	for {
 
