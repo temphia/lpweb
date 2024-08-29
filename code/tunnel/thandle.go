@@ -7,15 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
-	"sync"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
-
-	"github.com/fxamacker/cbor"
-
-	"github.com/temphia/lpweb/code/proxy/rcycle"
-	"github.com/temphia/lpweb/code/wire"
+	"github.com/temphia/lpweb/code/proxy/streamer"
 )
 
 func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
@@ -27,70 +22,28 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 
 	peerId := stream.Conn().RemotePeer()
 
-	um := cbor.NewDecoder(stream)
-	packet := wire.Packet{}
-
-	err := um.Decode(&packet)
+	requestIdBytes := make([]byte, 16)
+	_, err := stream.Read(requestIdBytes)
 	if err != nil {
-		panic(err)
-	}
-
-	if packet.PacketType != wire.FragmentSend {
-
-		if packet.HttpRequestId == 0 {
-			stream.Close()
-			return
-		}
-
-		ht.rcLock.Lock()
-		request := ht.requestCycles[packet.HttpRequestId]
-		ht.rcLock.Unlock()
-
-		if request == nil {
-			stream.Close()
-			return
-		}
-
-		request.OutsidePacket <- rcycle.SideChannelPacket{
-			Packet:     &packet,
-			FromStream: stream,
-		}
-
+		pp.Println("@err/Read", err.Error())
 		return
 	}
 
-	request := rcycle.RequestCycle{
-		Context:   context.Background(),
-		RequestId: packet.HttpRequestId,
-		LocalNode: ht.mesh.Host,
-
-		OutsidePacket:  make(chan rcycle.SideChannelPacket),
-		OutData:        packet.Data,
-		ActiveStream:   stream,
-		TotalFragments: packet.TotalFragments,
-		TargetPeer:     peerId,
-
-		DonePacketFrags: make(map[uint32]bool),
-		DoneInDataChan:  make(chan uint32),
-		InData:          nil,
-
-		CloseChan: make(chan struct{}),
+	request := &streamer.Streamer{
+		RequestId:    requestIdBytes,
+		LocalNode:    ht.localNode,
+		OutData:      nil,
+		ActiveStream: stream,
+		Context:      context.TODO(),
+		TargetPeer:   peerId,
+		InData:       nil,
 	}
 
-	ht.rcLock.Lock()
-	ht.requestCycles[packet.HttpRequestId] = &request
-	ht.rcLock.Unlock()
-
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-
-	go request.ControlLoop(&wg, false)
-
-	err = request.StreamReadLoop(stream)
+	err = request.ReceiveData()
 	if err != nil {
-		pp.Println("@err/StreamReadLoop", err.Error())
-		panic(err)
+		pp.Println("@err/ReceiveData", err.Error())
+		return
+
 	}
 
 	pp.Println("@read_data", string(request.InData))
@@ -124,10 +77,10 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 
 	request.OutData = out
 
-	err = request.StreamWriteLoop()
+	err = request.SendData()
 	if err != nil {
-		pp.Println("@err/StreamWriteLoop", err.Error())
+		pp.Println("@err/SendData", err.Error())
+		return
 	}
 
-	wg.Wait()
 }

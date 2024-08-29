@@ -7,14 +7,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httputil"
-	"sync"
-	"sync/atomic"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/temphia/lpweb/code/core/mesh"
-	"github.com/temphia/lpweb/code/proxy/rcycle"
+	"github.com/temphia/lpweb/code/proxy/streamer"
 	"github.com/temphia/lpweb/code/wire"
+
+	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type SideChannelPacket struct {
@@ -49,8 +49,6 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 		totalFragments++
 	}
 
-	reqId := atomic.AddUint32(&wp.requestIdCounter, 1)
-
 	pp.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
 	pp.Println("addr_len", len(enode.addr.Addrs))
 
@@ -61,62 +59,36 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 		return
 	}
 
-	pp.Println("@handleHttp2/RequestCycle/4")
-
-	request := &rcycle.RequestCycle{
-		Context:         context.TODO(),
-		RequestId:       reqId,
-		LocalNode:       wp.localNode,
-		OutsidePacket:   make(chan rcycle.SideChannelPacket, 1),
-		OutData:         out,
-		ActiveStream:    stream,
-		TotalFragments:  totalFragments,
-		TargetPeer:      enode.addr.ID,
-		DonePacketFrags: make(map[uint32]bool),
-		DoneInDataChan:  make(chan uint32, 1),
-		InData:          nil,
-		CloseChan:       make(chan struct{}),
-	}
-
-	wp.reqMLock.Lock()
-	wp.requests[reqId] = request
-	wp.reqMLock.Unlock()
-
-	defer func() {
-		wp.reqMLock.Lock()
-		delete(wp.requests, reqId)
-		wp.reqMLock.Unlock()
-
-	}()
-
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	pp.Println("@handleHttp2/ControlLoop/5")
-
-	go request.ControlLoop(&wg, true)
-
-	pp.Println("@handleHttp2/StreamWriteLoop/6")
-
-	err = request.StreamWriteLoop()
+	id, err := nanoid.New(16)
 	if err != nil {
-		pp.Println("@err/StreamWriteLoop", err.Error())
+		panic(err)
 	}
 
-	pp.Println("@handleHttp2/ControlLoop/7")
+	if len(id) != 16 {
+		panic("id is not 16 bytes")
+	}
 
-	err = request.StreamReadLoop(stream)
+	ss := streamer.Streamer{
+		RequestId:    []byte(id),
+		LocalNode:    wp.localNode,
+		OutData:      out,
+		TargetPeer:   enode.addr.ID,
+		InData:       nil,
+		Context:      context.TODO(),
+		ActiveStream: stream,
+	}
+
+	err = ss.SendData()
 	if err != nil {
-		pp.Println("@err/StreamReadLoop", err.Error())
+		panic(err)
 	}
 
-	pp.Println("@handleHttp2/ControlLoop/8")
+	err = ss.ReceiveData()
+	if err != nil {
+		panic(err)
+	}
 
-	request.Close()
-
-	wg.Wait()
-
-	reader := bytes.NewReader(request.InData)
+	reader := bytes.NewReader(ss.InData)
 	resp, err := http.ReadResponse(bufio.NewReader(reader), r)
 	if err != nil {
 		pp.Println("@err/ReadResponse", err.Error())

@@ -12,6 +12,7 @@ require (
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/libp2p/go-libp2p v0.36.2
 	github.com/libp2p/go-libp2p-kad-dht v0.26.1
+	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/multiformats/go-multiaddr v0.13.0
 	github.com/pkg/errors v0.9.1
 	github.com/tidwall/gjson v1.17.3

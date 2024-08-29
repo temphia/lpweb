@@ -16,7 +16,7 @@ import (
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
-	"github.com/temphia/lpweb/code/proxy/rcycle"
+	"github.com/temphia/lpweb/code/proxy/streamer"
 	"github.com/temphia/lpweb/code/wire"
 
 	"github.com/fxamacker/cbor"
@@ -33,9 +33,7 @@ type WebProxy struct {
 
 	proxyPort int
 
-	requestIdCounter uint32
-
-	requests map[uint32]*rcycle.RequestCycle
+	requests map[uint32]*streamer.Streamer
 	reqMLock sync.Mutex
 }
 
@@ -61,15 +59,14 @@ func NewWebProxy(port int) *WebProxy {
 	seeker := etcd.New(conf.UUID)
 
 	instance := &WebProxy{
-		mesh:             m,
-		localNode:        m.Host,
-		proxy:            proxy,
-		proxyPort:        port,
-		upNodes:          make(map[string]*UpNode),
-		requestIdCounter: 0,
-		requests:         make(map[uint32]*rcycle.RequestCycle),
-		reqMLock:         sync.Mutex{},
-		upnodeLock:       sync.Mutex{},
+		mesh:       m,
+		localNode:  m.Host,
+		proxy:      proxy,
+		proxyPort:  port,
+		upNodes:    make(map[string]*UpNode),
+		requests:   make(map[uint32]*streamer.Streamer),
+		reqMLock:   sync.Mutex{},
+		upnodeLock: sync.Mutex{},
 
 		seekers: []seekers.Seeker{
 			seeker,
@@ -99,16 +96,18 @@ func NewWebProxy(port int) *WebProxy {
 			return
 		}
 
-		req.OutsidePacket <- rcycle.SideChannelPacket{
-			Packet:     &packet,
-			FromStream: s,
-		}
+		pp.Println("@NOT_IMPLEMENTED")
 
-		err = req.StreamReadLoop(s)
-		if err != nil {
-			pp.Println("@err_stream_read", err.Error())
-			s.Close()
-		}
+		// req.OutsidePacket <- rcycle.SideChannelPacket{
+		// 	Packet:     &packet,
+		// 	FromStream: s,
+		// }
+
+		// err = req.StreamReadLoop(s)
+		// if err != nil {
+		// 	pp.Println("@err_stream_read", err.Error())
+		// 	s.Close()
+		// }
 
 	})
 

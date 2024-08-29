@@ -13,7 +13,7 @@ import (
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
-	"github.com/temphia/lpweb/code/proxy/rcycle"
+	"github.com/temphia/lpweb/code/proxy/streamer"
 )
 
 type HttpTunnel struct {
@@ -22,8 +22,8 @@ type HttpTunnel struct {
 	localNode    host.Host
 	seekers      []seekers.Seeker
 
-	requestCycles map[uint32]*rcycle.RequestCycle
-	rcLock        sync.Mutex
+	activeStramers map[string]*streamer.Streamer
+	rcLock         sync.Mutex
 }
 
 func NewHttpTunnel(port int) *HttpTunnel {
@@ -42,12 +42,12 @@ func NewHttpTunnel(port int) *HttpTunnel {
 	seeker := etcd.New(conf.UUID)
 
 	instance := &HttpTunnel{
-		mesh:          m,
-		localNode:     m.Host,
-		tunnelToPort:  port,
-		seekers:       []seekers.Seeker{seeker},
-		requestCycles: make(map[uint32]*rcycle.RequestCycle),
-		rcLock:        sync.Mutex{},
+		mesh:           m,
+		localNode:      m.Host,
+		tunnelToPort:   port,
+		seekers:        []seekers.Seeker{seeker},
+		activeStramers: make(map[string]*streamer.Streamer),
+		rcLock:         sync.Mutex{},
 	}
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp, instance.streamHandleHttp)
