@@ -67,26 +67,51 @@ func (rc *Streamer) AddStream(current *Packet, stream network.Stream) {
 
 func writePacket(stream network.Stream, packet *Packet) error {
 
+	slog.Info("writePacket/1")
+
 	// write packet type
-	stream.Write([]byte{packet.PType})
+	_, err := stream.Write([]byte{packet.PType})
+	if err != nil {
+		slog.Info("writePacket/2")
+		return err
+	}
 
 	// length, offset, total
 	intBytes := make([]byte, 4)
 
 	// write length
 	binary.BigEndian.PutUint32(intBytes, packet.Length)
-	stream.Write(intBytes)
+	_, err = stream.Write(intBytes)
+	if err != nil {
+		slog.Info("writePacket/3")
+		return err
+	}
 
 	// write offset
 	binary.BigEndian.PutUint32(intBytes, packet.Offset)
-	stream.Write(intBytes)
+	_, err = stream.Write(intBytes)
+	if err != nil {
+		slog.Info("writePacket/4")
+		return err
+	}
 
 	// write total
 	binary.BigEndian.PutUint32(intBytes, packet.Total)
-	stream.Write(intBytes)
+	_, err = stream.Write(intBytes)
+	if err != nil {
+		slog.Info("writePacket/5")
+		return err
+	}
 
 	// final data
-	_, err := stream.Write(packet.Data)
+	_, err = stream.Write(packet.Data)
+
+	if err != nil {
+		slog.Info("writePacket/6")
+		return err
+	}
+
+	slog.Info("writePacket/7")
 
 	return err
 }
