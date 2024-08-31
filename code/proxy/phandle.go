@@ -93,6 +93,8 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 		panic(err)
 	}
 
+	pp.Println("@RESPONE|----------------------------------->", string(ss.InData))
+
 	reader := bytes.NewReader(ss.InData)
 	resp, err := http.ReadResponse(bufio.NewReader(reader), r)
 	if err != nil {
@@ -113,10 +115,10 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 	if resp.Header.Get("Content-Length") == "" && header.Get("Transfer-Encoding") != "chunked" && resp.Header.Get("Content-Type") == "" {
 		pp.Println("@forcing_chunked_mode")
 		header.Set("Transfer-Encoding", "chunked")
-		pp.Println(io.Copy(httputil.NewChunkedWriter(w), reader))
+		pp.Println(io.Copy(httputil.NewChunkedWriter(w), resp.Body))
 
 	} else {
-		io.Copy(w, reader)
+		io.Copy(w, resp.Body)
 	}
 
 }
