@@ -176,13 +176,13 @@ func readPacket(stream network.Stream) (*Packet, error) {
 		return nil, err
 	}
 
-	slog.Info("readPacket/11")
-
 	packet.PType = ptype
 	packet.Length = length
 	packet.Offset = offset
 	packet.Total = total
 	packet.Data = dataBytes
+
+	slog.Info("readPacket/11", slog.Any("packet", packet))
 
 	return packet, nil
 
