@@ -3,6 +3,7 @@ package streamer
 import (
 	"context"
 	"encoding/binary"
+	"log/slog"
 
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -91,20 +92,28 @@ func writePacket(stream network.Stream, packet *Packet) error {
 }
 
 func readPacket(stream network.Stream) (*Packet, error) {
+
+	slog.Info("readPacket/1")
+
 	packet := &Packet{}
 	intBytes := make([]byte, 4)
 
 	// read packet type
 	_, err := stream.Read(intBytes[:1])
 	if err != nil {
+		slog.Info("readPacket/2")
+
 		return nil, err
 	}
+
+	slog.Info("readPacket/3")
 
 	ptype := uint8(intBytes[0])
 
 	// read length
 	_, err = stream.Read(intBytes)
 	if err != nil {
+		slog.Info("readPacket/4")
 		return nil, err
 	}
 
@@ -112,26 +121,37 @@ func readPacket(stream network.Stream) (*Packet, error) {
 
 	// read offset
 
+	slog.Info("readPacket/5")
+
 	_, err = stream.Read(intBytes)
 	if err != nil {
+		slog.Info("readPacket/6")
 		return nil, err
 	}
 	offset := binary.BigEndian.Uint32(intBytes)
 
+	slog.Info("readPacket/7")
+
 	// read total
 	_, err = stream.Read(intBytes)
 	if err != nil {
+		slog.Info("readPacket/8")
 		return nil, err
 	}
 	total := binary.BigEndian.Uint32(intBytes)
+
+	slog.Info("readPacket/9")
 
 	// read data
 
 	dataBytes := make([]byte, length)
 	_, err = stream.Read(dataBytes)
 	if err != nil {
+		slog.Info("readPacket/10")
 		return nil, err
 	}
+
+	slog.Info("readPacket/11")
 
 	packet.PType = ptype
 	packet.Length = length
