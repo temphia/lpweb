@@ -185,7 +185,9 @@ func readPacket(stream network.Stream) (*Packet, error) {
 	packet.Total = total
 	packet.Data = dataBytes
 
-	slog.Info("readPacket/11", slog.Any("packet", packet))
+	slog.Info("readPacket/11")
+
+	pp.Println("@read_data", packet)
 
 	return packet, nil
 
