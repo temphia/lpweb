@@ -29,6 +29,8 @@ func (ht *HttpTunnel) streamHandleHttp2(stream network.Stream) {
 		return
 	}
 
+	pp.Println("@read_data", string(requestIdBytes))
+
 	request := &streamer.Streamer{
 		RequestId:    requestIdBytes,
 		LocalNode:    ht.localNode,

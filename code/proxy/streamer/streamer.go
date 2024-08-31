@@ -105,14 +105,14 @@ func writePacket(stream network.Stream, packet *Packet) error {
 	}
 
 	// final data
-	_, err = stream.Write(packet.Data)
+	written, err := stream.Write(packet.Data)
 
 	if err != nil {
 		slog.Info("writePacket/6")
 		return err
 	}
 
-	slog.Info("writePacket/7")
+	pp.Println("writePacket/7 total/written", len(packet.Data), written)
 
 	return err
 }
