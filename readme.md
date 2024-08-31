@@ -41,8 +41,12 @@ git clone https://github.com/temphia/lpweb
 
 cd lpweb
 
+git checkout mj-packet-splitter
+
 tmux # Ctrl+b " -> to split screen
 
 python3 -m http.server # in one tmux shell
+
+mkdir -p /root/.config/lpweb/
 
 /usr/local/go/bin/go run main.go http-tunnel --port=8000 # in another tmux shell
