@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"log/slog"
 
+	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -170,11 +171,13 @@ func readPacket(stream network.Stream) (*Packet, error) {
 	// read data
 
 	dataBytes := make([]byte, length)
-	_, err = stream.Read(dataBytes)
+	readSize, err := stream.Read(dataBytes)
 	if err != nil {
 		slog.Info("readPacket/10")
 		return nil, err
 	}
+
+	pp.Println("@read_data", length, readSize)
 
 	packet.PType = ptype
 	packet.Length = length
