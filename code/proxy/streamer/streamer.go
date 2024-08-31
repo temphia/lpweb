@@ -42,7 +42,10 @@ type Streamer struct {
 
 func (rc *Streamer) SendData() error {
 	return writePacket(rc.ActiveStream, &Packet{
+		Offset: 0,
+		Total:  uint32(len(rc.OutData)),
 		Length: uint32(len(rc.OutData)),
+		PType:  uint8(1),
 		Data:   rc.OutData,
 	})
 

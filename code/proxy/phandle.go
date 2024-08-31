@@ -78,6 +78,11 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 		ActiveStream: stream,
 	}
 
+	_, err = stream.Write([]byte(id))
+	if err != nil {
+		panic(err)
+	}
+
 	err = ss.SendData()
 	if err != nil {
 		panic(err)
