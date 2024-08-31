@@ -58,7 +58,7 @@ func (rc *Streamer) ReceiveData() error {
 		return err
 	}
 
-	rc.OutData = packet.Data
+	rc.InData = packet.Data
 
 	return nil
 
