@@ -68,7 +68,7 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 			return err
 		}
 		totalWritten += written
-		if totalWritten >= int(packet.Total) {
+		if totalWritten >= int(len(packet.Data)) {
 			break
 		}
 
