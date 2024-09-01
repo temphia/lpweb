@@ -182,7 +182,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 		libp2p.Transport(quic.NewTransport),
 		libp2p.EnableRelay(),
 		libp2p.ResourceManager(rm),
-		libp2p.ForceReachabilityPublic(),
+		libp2p.ForceReachabilityPrivate(),
 
 		libp2p.PrivateNetwork(nil),
 
