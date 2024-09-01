@@ -8,16 +8,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
-// send_header, send_body, end_body, tally_body, resend_body
-
-type Packet struct {
-	PType  uint8 // 1:start_send, 2:send, 3:end_send, 4:tally, 5:resend
-	Offset uint32
-	Length uint32
-	Total  uint32
-	Data   []byte
-}
-
 func WritePacket(stream network.Stream, packet *Packet) error {
 
 	slog.Info("writePacket/1")
