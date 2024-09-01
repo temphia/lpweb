@@ -54,17 +54,26 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 
 	log.Println("writePacket/total/ok")
 
-	// final data
-	written, err := stream.Write(packet.Data)
+	totalWritten := 0
 
-	if err != nil {
-		log.Println("writePacket/6")
-		return err
+	for {
+		// final data
+		written, err := stream.Write(packet.Data[totalWritten:])
+
+		if err != nil {
+			log.Println("writePacket/6")
+			return err
+		}
+		totalWritten += written
+		if totalWritten >= int(packet.Total) {
+			break
+		}
+
 	}
 
 	pp.Println("PACKET", packet)
 
-	pp.Println("writePacket/7 total/written", len(packet.Data), written)
+	pp.Println("writePacket/7 total/written", len(packet.Data), totalWritten)
 
 	if len(packet.Data) > 10 {
 		pp.Println("TAIL_DATA", string(packet.Data[len(packet.Data)-10:]))
@@ -129,13 +138,23 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	// read data
 
 	dataBytes := make([]byte, length)
-	readSize, err := stream.Read(dataBytes)
-	if err != nil {
-		log.Println("readPacket/10")
-		return nil, err
+	totalRead := 0
+
+	for {
+		readSize, err := stream.Read(dataBytes[totalRead:])
+		if err != nil {
+			log.Println("readPacket/10")
+			return nil, err
+		}
+		totalRead += readSize
+
+		if totalRead >= int(length) {
+			break
+		}
+
 	}
 
-	pp.Println("@read_data", length, readSize)
+	pp.Println("@read_data", length, totalRead)
 
 	packet.PType = ptype
 	packet.Offset = int32(offset)
