@@ -135,6 +135,8 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 	if resp.ContentLength > 0 {
 		offset := int32(0)
 
+		pp.Println("RESPONSE_BODY")
+
 		for {
 			pp.Println("@offset", offset)
 
