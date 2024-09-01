@@ -89,6 +89,8 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 	offset := uint32(0)
 	fbuf := make([]byte, fragmentSize)
 
+	pp.Println("RESPONSE_BODY")
+
 	for {
 
 		pp.Println("@offset", offset)
