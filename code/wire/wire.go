@@ -58,6 +58,9 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 
 	for {
 		// final data
+
+		pp.Println("@written", totalWritten)
+
 		pp.Println("@T", len(packet.Data))
 		pp.Println("@W>>", len(packet.Data[totalWritten:]))
 		written, err := stream.Write(packet.Data[totalWritten:])
