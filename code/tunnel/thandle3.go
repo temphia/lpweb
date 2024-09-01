@@ -92,6 +92,8 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 
 	for {
 
+		pp.Println("@offset", offset)
+
 		last := false
 
 		n, err := resp.Body.Read(fbuf)

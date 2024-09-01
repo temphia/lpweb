@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 
+	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/wire"
 )
@@ -66,6 +67,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 		fbuf := make([]byte, fragmentSize)
 
 		for {
+			pp.Println("@offset", offset)
 
 			last := false
 			n, err := r.Body.Read(fbuf)
@@ -136,6 +138,8 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 		offset := uint32(0)
 
 		for {
+			pp.Println("@offset", offset)
+
 			wpack, err := wire.ReadPacket(stream)
 			if err != nil {
 				log.Println("@err/ReadResponse", err.Error())
@@ -151,6 +155,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 			if wpack.PType != wire.PtypeSendBody &&
 				wpack.PType != wire.PtypeEndBody &&
 				wpack.PType != wire.PtypeReSendBody {
+				pp.Println("HH", int64(wpack.PType))
 				panic("invalid packet type 2")
 			}
 
