@@ -31,7 +31,7 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 	}
 
 	// write offset
-	binary.BigEndian.PutUint32(intBytes, packet.Offset)
+	binary.BigEndian.PutUint32(intBytes, uint32(packet.Offset))
 	_, err = stream.Write(intBytes)
 	if err != nil {
 		log.Println("writePacket/4")
@@ -39,7 +39,7 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 	}
 
 	// write total
-	binary.BigEndian.PutUint32(intBytes, packet.Total)
+	binary.BigEndian.PutUint32(intBytes, uint32(packet.Total))
 	_, err = stream.Write(intBytes)
 	if err != nil {
 		log.Println("writePacket/5")
@@ -122,8 +122,8 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	pp.Println("@read_data", length, readSize)
 
 	packet.PType = ptype
-	packet.Offset = offset
-	packet.Total = total
+	packet.Offset = int32(offset)
+	packet.Total = int32(total)
 	packet.Data = dataBytes
 
 	log.Println("readPacket/11")

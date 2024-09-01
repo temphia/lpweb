@@ -76,7 +76,7 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 	err = wire.WritePacket(stream, &wire.Packet{
 		PType:  wire.PTypeSendHeader,
 		Offset: 0,
-		Total:  uint32(resp.ContentLength),
+		Total:  int32(resp.ContentLength),
 		Data:   out,
 	})
 	if err != nil {
@@ -107,8 +107,8 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 
 		err = wire.WritePacket(stream, &wire.Packet{
 			PType:  ptype,
-			Offset: uint32(offset),
-			Total:  uint32(resp.ContentLength),
+			Offset: int32(offset),
+			Total:  int32(resp.ContentLength),
 			Data:   fbuf[:n],
 		})
 

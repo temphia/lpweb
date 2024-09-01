@@ -54,7 +54,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 	wire.WritePacket(stream, &wire.Packet{
 		PType:  wire.PTypeSendHeader,
 		Offset: 0,
-		Total:  uint32(r.ContentLength),
+		Total:  int32(r.ContentLength),
 		Data:   out,
 	})
 
@@ -86,8 +86,8 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 
 			err = wire.WritePacket(stream, &wire.Packet{
 				PType:  ptype,
-				Offset: uint32(offset),
-				Total:  uint32(r.ContentLength),
+				Offset: int32(offset),
+				Total:  int32(r.ContentLength),
 				Data:   fbuf[:n],
 			})
 
@@ -133,7 +133,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 	w.WriteHeader(resp.StatusCode)
 
 	if resp.ContentLength > 0 {
-		offset := uint32(0)
+		offset := int32(0)
 
 		for {
 			pp.Println("@offset", offset)

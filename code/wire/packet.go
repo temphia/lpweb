@@ -15,8 +15,8 @@ const (
 
 type Packet struct {
 	PType  PacketType
-	Offset uint32 // current offset
-	Total  uint32 // total body size
+	Offset int32 // current offset
+	Total  int32 // total body size
 	Data   []byte
 }
 
