@@ -119,7 +119,7 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 			return
 		}
 
-		offset += uint32(len(fbuf))
+		offset += uint32(n)
 
 		if resp.ContentLength != 0 && offset >= uint32(resp.ContentLength) {
 			break
