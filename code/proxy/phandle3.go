@@ -115,7 +115,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 	}
 
 	if wpack.PType != wire.PTypeSendHeader {
-		panic("invalid packet type")
+		panic("invalid packet type 1")
 	}
 
 	reader := bytes.NewReader(wpack.Data)
@@ -151,7 +151,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 			if wpack.PType != wire.PtypeSendBody &&
 				wpack.PType != wire.PtypeEndBody &&
 				wpack.PType != wire.PtypeReSendBody {
-				panic("invalid packet type")
+				panic("invalid packet type 2")
 			}
 
 			w.Write(wpack.Data)

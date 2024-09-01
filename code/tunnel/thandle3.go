@@ -43,7 +43,7 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 	}
 
 	if wpak.PType != wire.PTypeSendHeader {
-		panic("invalid packet type")
+		panic("invalid packet type 3")
 	}
 
 	reader := bytes.NewBuffer(wpak.Data)
