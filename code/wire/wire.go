@@ -60,7 +60,7 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 		// final data
 		pp.Println("@W>>")
 		written, err := stream.Write(packet.Data[totalWritten:])
-		pp.Println("<<W@")
+		pp.Println("<<W@", written)
 
 		if err != nil {
 			log.Println("writePacket/6")
@@ -146,7 +146,7 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 
 		pp.Println("@R>>")
 		readSize, err := stream.Read(dataBytes[totalRead:])
-		pp.Println("<<R@")
+		pp.Println("<<R@", readSize)
 
 		if err != nil {
 			log.Println("readPacket/10")
