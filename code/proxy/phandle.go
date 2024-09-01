@@ -44,11 +44,6 @@ func (wp *WebProxy) handleHttp2(r *http.Request, w http.ResponseWriter) {
 
 	pp.Println("@handleHttp2/calc_fragments/2")
 
-	totalFragments := uint32(len(out) / wire.PacketFragmentationSize)
-	if len(out)%wire.PacketFragmentationSize != 0 {
-		totalFragments++
-	}
-
 	pp.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
 	pp.Println("addr_len", len(enode.addr.Addrs))
 

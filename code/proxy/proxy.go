@@ -17,9 +17,6 @@ import (
 	"github.com/temphia/lpweb/code/core/seekers"
 	"github.com/temphia/lpweb/code/core/seekers/etcd"
 	"github.com/temphia/lpweb/code/proxy/streamer"
-	"github.com/temphia/lpweb/code/wire"
-
-	"github.com/fxamacker/cbor"
 )
 
 type WebProxy struct {
@@ -74,41 +71,7 @@ func NewWebProxy(port int) *WebProxy {
 	}
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp2, func(s network.Stream) {
-
-		m := cbor.NewDecoder(s)
-		packet := wire.Packet{}
-
-		err := m.Decode(&packet)
-
-		if err != nil {
-			pp.Println("@err_unmarshal", err.Error())
-			s.Close()
-			return
-		}
-
-		instance.reqMLock.Lock()
-		req := instance.requests[packet.HttpRequestId]
-		instance.reqMLock.Unlock()
-
-		if req == nil {
-			pp.Println("@err_no_req_found", packet.HttpRequestId)
-			s.Close()
-			return
-		}
-
-		pp.Println("@NOT_IMPLEMENTED")
-
-		// req.OutsidePacket <- rcycle.SideChannelPacket{
-		// 	Packet:     &packet,
-		// 	FromStream: s,
-		// }
-
-		// err = req.StreamReadLoop(s)
-		// if err != nil {
-		// 	pp.Println("@err_stream_read", err.Error())
-		// 	s.Close()
-		// }
-
+		panic("Not implemented")
 	})
 
 	return instance
