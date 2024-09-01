@@ -88,6 +88,8 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 
 	ptype := uint8(intBytes[0])
 
+	log.Println("readPacket/4/ptype", int64(ptype))
+
 	// read length
 	_, err = stream.Read(intBytes)
 	if err != nil {
@@ -99,7 +101,7 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 
 	// read offset
 
-	log.Println("readPacket/5")
+	log.Println("readPacket/5/length", int64(length))
 
 	_, err = stream.Read(intBytes)
 	if err != nil {
@@ -108,7 +110,7 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	}
 	offset := binary.BigEndian.Uint32(intBytes)
 
-	log.Println("readPacket/7")
+	log.Println("readPacket/7/offset", int64(offset))
 
 	// read total
 	_, err = stream.Read(intBytes)
@@ -118,7 +120,7 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	}
 	total := binary.BigEndian.Uint32(intBytes)
 
-	log.Println("readPacket/9")
+	log.Println("readPacket/9/total", int64(total))
 
 	// read data
 
