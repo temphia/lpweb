@@ -23,7 +23,7 @@ type Packet struct {
 }
 
 func (p *Packet) String() string {
-	return fmt.Sprintf("Packet{\n\tPType: %d,\n Offset: %d,\n Total: %d,\n Data: SIZE<%d>}", p.PType, p.Offset, p.Total, len(p.Data))
+	return fmt.Sprintf("Packet{\n\tPType: %d,\n\t Offset: %d,\n\t Total: %d,\n\t Data: SIZE<%d>}", p.PType, p.Offset, p.Total, len(p.Data))
 }
 
 func GetRequestId() []byte {
