@@ -142,7 +142,7 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	packet.Total = int32(total)
 	packet.Data = dataBytes
 
-	log.Println("readPacket/11", packet)
+	pp.Println("readPacket/11", packet)
 
 	if len(packet.Data) > 10 {
 		pp.Println("TAIL_DATA", string(packet.Data[:10]))
