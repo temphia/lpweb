@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strings"
 
 	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core/mesh"
@@ -169,4 +170,12 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 		}
 	}
 
+}
+
+func (wp *WebProxy) handleHttpWS(r *http.Request, w http.ResponseWriter) {
+
+}
+
+func extractHostHash(host string) string {
+	return strings.Split(host, ".")[0]
 }

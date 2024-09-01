@@ -97,7 +97,7 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		pp.Println("@IPWEB_INTERCEPT", r.Method)
 
 		if r.Method == "CONNECT" {
-			wp.handleWS(r, w)
+			wp.handleHttpWS(r, w)
 		} else {
 			wp.handleHttp3(r, w)
 		}
