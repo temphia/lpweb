@@ -70,7 +70,7 @@ func NewWebProxy(port int) *WebProxy {
 		},
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolHttp2, func(s network.Stream) {
+	m.Host.SetStreamHandler(mesh.ProtocolHttp3, func(s network.Stream) {
 		panic("Not implemented")
 	})
 
@@ -99,7 +99,7 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "CONNECT" {
 			wp.handleWS(r, w)
 		} else {
-			wp.handleHttp2(r, w)
+			wp.handleHttp3(r, w)
 		}
 
 		return

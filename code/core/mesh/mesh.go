@@ -31,6 +31,7 @@ import (
 const (
 	ProtocolHttp  = "/lpweb/http/1.0.0"
 	ProtocolHttp2 = "/lpweb/http/1.2.0"
+	ProtocolHttp3 = "/lpweb/http/1.3.0"
 	ProtocolWS    = "/lpweb/ws/1.0.0"
 )
 

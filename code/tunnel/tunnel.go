@@ -51,7 +51,7 @@ func NewHttpTunnel(port int) *HttpTunnel {
 	}
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp, instance.streamHandleHttp)
-	m.Host.SetStreamHandler(mesh.ProtocolHttp2, instance.streamHandleHttp2)
+	m.Host.SetStreamHandler(mesh.ProtocolHttp3, instance.streamHandleHttp3)
 	m.Host.SetStreamHandler(mesh.ProtocolWS, instance.streamHandleWS)
 
 	servHost := fmt.Sprintf("http://%s.lpweb", strings.ToLower(m.Host.ID().String()))

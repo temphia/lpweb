@@ -36,7 +36,7 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 	log.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
 	log.Println("addr_len", len(enode.addr.Addrs))
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp2)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp3)
 	if err != nil {
 		log.Println("@err_new_stream", err.Error())
 		w.WriteHeader(http.StatusBadGateway)
@@ -67,18 +67,24 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 
 		for {
 
+			last := false
 			n, err := r.Body.Read(fbuf)
 			if err == io.EOF {
 				log.Println("EOF")
-				break
+				last = true
 			}
 
 			if err != nil {
 				panic(err)
 			}
 
+			ptype := wire.PtypeSendBody
+			if last {
+				ptype = wire.PtypeEndBody
+			}
+
 			err = wire.WritePacket(stream, &wire.Packet{
-				PType:  wire.PtypeSendBody,
+				PType:  ptype,
 				Offset: uint32(offset),
 				Total:  uint32(r.ContentLength),
 				Length: uint32(n),
@@ -92,6 +98,10 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 			offset += uint32(n)
 
 			if offset >= uint32(r.ContentLength) {
+				break
+			}
+
+			if last {
 				break
 			}
 
