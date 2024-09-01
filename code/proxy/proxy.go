@@ -45,7 +45,6 @@ func NewWebProxy(port int) *WebProxy {
 		panic(err)
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolHttp, deny)
 	m.Host.SetStreamHandler(mesh.ProtocolWS, deny)
 
 	log.Println("p2p_relay@", m.Host.ID().String())
