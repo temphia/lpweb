@@ -4,9 +4,9 @@ type PacketType = uint8
 
 const (
 	PTypeSendHeader PacketType = iota
-	PtypeSendBody   PacketType = iota + 1
-	PtypeEndBody    PacketType = iota + 2
-	PtypeReSendBody PacketType = iota + 3
+	PtypeSendBody   PacketType = iota
+	PtypeEndBody    PacketType = iota
+	PtypeReSendBody PacketType = iota
 )
 
 type Packet struct {
