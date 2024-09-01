@@ -1,6 +1,8 @@
 package wire
 
 import (
+	"fmt"
+
 	nanoid "github.com/matoous/go-nanoid/v2"
 )
 
@@ -18,6 +20,10 @@ type Packet struct {
 	Offset int32 // current offset
 	Total  int32 // total body size
 	Data   []byte
+}
+
+func (p *Packet) String() string {
+	return fmt.Sprintf("PType: %d,\n Offset: %d,\n Total: %d,\n Data: SIZE<%d>", p.PType, p.Offset, p.Total, len(p.Data))
 }
 
 func GetRequestId() []byte {
