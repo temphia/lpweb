@@ -66,6 +66,10 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 
 	pp.Println("writePacket/7 total/written", len(packet.Data), written)
 
+	if len(packet.Data) > 10 {
+		pp.Println("TAIL_DATA", string(packet.Data[:10]))
+	}
+
 	return err
 }
 
@@ -138,9 +142,11 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	packet.Total = int32(total)
 	packet.Data = dataBytes
 
-	log.Println("readPacket/11")
+	log.Println("readPacket/11", packet)
 
-	pp.Println("@read_data", packet)
+	if len(packet.Data) > 10 {
+		pp.Println("TAIL_DATA", string(packet.Data[:10]))
+	}
 
 	return packet, nil
 
