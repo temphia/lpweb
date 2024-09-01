@@ -23,7 +23,7 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 	intBytes := make([]byte, 4)
 
 	// write length
-	binary.BigEndian.PutUint32(intBytes, packet.Length)
+	binary.BigEndian.PutUint32(intBytes, uint32(len(packet.Data)))
 	_, err = stream.Write(intBytes)
 	if err != nil {
 		log.Println("writePacket/3")
@@ -122,7 +122,6 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 	pp.Println("@read_data", length, readSize)
 
 	packet.PType = ptype
-	packet.Length = length
 	packet.Offset = offset
 	packet.Total = total
 	packet.Data = dataBytes

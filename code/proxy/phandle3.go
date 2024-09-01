@@ -55,7 +55,6 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 		PType:  wire.PTypeSendHeader,
 		Offset: 0,
 		Total:  uint32(r.ContentLength),
-		Length: uint32(len(out)),
 		Data:   out,
 	})
 
@@ -89,7 +88,6 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 				PType:  ptype,
 				Offset: uint32(offset),
 				Total:  uint32(r.ContentLength),
-				Length: uint32(n),
 				Data:   fbuf[:n],
 			})
 
