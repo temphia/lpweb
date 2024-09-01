@@ -58,7 +58,7 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 
 	for {
 		// final data
-		pp.Println("@W>>")
+		pp.Println("@W>>", len(packet.Data[totalWritten:]))
 		written, err := stream.Write(packet.Data[totalWritten:])
 		pp.Println("<<W@", written)
 
@@ -144,7 +144,7 @@ func ReadPacket(stream network.Stream) (*Packet, error) {
 
 	for {
 
-		pp.Println("@R>>")
+		pp.Println("@R>>", len(dataBytes[totalRead:]))
 		readSize, err := stream.Read(dataBytes[totalRead:])
 		pp.Println("<<R@", readSize)
 
