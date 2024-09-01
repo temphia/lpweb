@@ -19,6 +19,8 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 		return err
 	}
 
+	log.Println("writePacket/ptype/ok")
+
 	// length, offset, total
 	intBytes := make([]byte, 4)
 
@@ -30,6 +32,8 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 		return err
 	}
 
+	log.Println("writePacket/len/ok")
+
 	// write offset
 	binary.BigEndian.PutUint32(intBytes, uint32(packet.Offset))
 	_, err = stream.Write(intBytes)
@@ -38,6 +42,8 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 		return err
 	}
 
+	log.Println("writePacket/offset/ok")
+
 	// write total
 	binary.BigEndian.PutUint32(intBytes, uint32(packet.Total))
 	_, err = stream.Write(intBytes)
@@ -45,6 +51,8 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 		log.Println("writePacket/5")
 		return err
 	}
+
+	log.Println("writePacket/total/ok")
 
 	// final data
 	written, err := stream.Write(packet.Data)
