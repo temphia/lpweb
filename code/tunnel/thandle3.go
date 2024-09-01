@@ -107,11 +107,13 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 			ptype = wire.PtypeEndBody
 		}
 
+		toSend := fbuf[:n]
+
 		err = wire.WritePacket(stream, &wire.Packet{
 			PType:  ptype,
 			Offset: int32(offset),
 			Total:  int32(resp.ContentLength),
-			Data:   fbuf[:n],
+			Data:   toSend,
 		})
 
 		if err != nil {
@@ -119,7 +121,7 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 			return
 		}
 
-		offset += uint32(n)
+		offset += uint32(len(toSend))
 
 		if resp.ContentLength != 0 && offset >= uint32(resp.ContentLength) {
 			break

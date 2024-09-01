@@ -84,18 +84,20 @@ func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
 				ptype = wire.PtypeEndBody
 			}
 
+			toSend := fbuf[:n]
+
 			err = wire.WritePacket(stream, &wire.Packet{
 				PType:  ptype,
 				Offset: int32(offset),
 				Total:  int32(r.ContentLength),
-				Data:   fbuf[:n],
+				Data:   toSend,
 			})
 
 			if err != nil {
 				panic(err)
 			}
 
-			offset += uint32(n)
+			offset += uint32(len(toSend))
 
 			if offset >= uint32(r.ContentLength) {
 				break

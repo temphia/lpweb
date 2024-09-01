@@ -54,6 +54,8 @@ func WritePacket(stream network.Stream, packet *Packet) error {
 		return err
 	}
 
+	pp.Println("PACKET", packet)
+
 	pp.Println("writePacket/7 total/written", len(packet.Data), written)
 
 	return err
