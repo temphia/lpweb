@@ -15,6 +15,8 @@ browser => ( proxy_or_extension_with_libp2p) => (another_libp2p_node_with_http_s
 # target machine
 lpweb http-tunnel --port=4000 # where 4000 is port you want to tunnel, your websevice/ dev port / python3 -m http.server
 
+# go run main.go http-tunnel --port=4000 # same as above
+
 # another machine
 lpweb web-proxy --port=8080 # 8080 is a proxy port, use in browser/networking
 
@@ -33,15 +35,7 @@ lpweb web-proxy --port=8080 # 8080 is a proxy port, use in browser/networking
 
 docker run -it golang:1.21
 
-apt update 
-
-apt install tmux
-
-git clone https://github.com/temphia/lpweb
-
-cd lpweb
-
-git checkout mj-packet-splitter
+apt update && apt install -y tmux && git clone https://github.com/temphia/lpweb && cd lpweb && git checkout mj-packet-splitter
 
 tmux # Ctrl+b " -> to split screen
 
