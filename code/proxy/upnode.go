@@ -12,7 +12,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/temphia/lpweb/code/core"
-	"github.com/tidwall/gjson"
 )
 
 type UpNode struct {
@@ -65,55 +64,23 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 
 	addr := peer.AddrInfo{
-		ID:    "",
+		ID:    peer.ID(target),
 		Addrs: make([]multiaddr.Multiaddr, 0),
 	}
 
-	for _, s := range wp.seekers {
-		out, err := s.Get(target)
-		if err != nil {
-			continue
-		}
-
-		pp.Println("seeker_resp", out)
-
-		maybeAddr := peer.AddrInfo{}
-		err = maybeAddr.UnmarshalJSON([]byte(gjson.Get(out, "node.value").String()))
-		if err != nil {
-			pp.Println("@err_skipping", err)
-			continue
-		}
-
-		if addr.ID == "" && strings.ToLower(maybeAddr.ID.String()) == target {
-			pp.Println("@assigning_addr")
-			addr.ID = maybeAddr.ID
-		}
-
-		addr.Addrs = append(addr.Addrs, maybeAddr.Addrs...)
-	}
-
-	if len(addr.Addrs) == 0 {
-		return nil, fmt.Errorf("no addresses found for %s", target)
-	}
-
-	pp.Println("@found_sth_from_seekers")
-	core.PrintPeerAddr(addr)
-
 	daddr, err := wp.getDHTAddrs(addr.ID)
-	if err != nil {
-		pp.Println("@err_getting_dht_addrs", err.Error())
-		return nil, err
+	if err == nil {
+		addr.Addrs = append(addr.Addrs, daddr.Addrs...)
 	}
 
-	core.PrintPeerAddr(addr)
-	// combine and deduplicate
-	daddr.Addrs = append(daddr.Addrs, addr.Addrs...)
 	addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
+	addr.Addrs = append(addr.Addrs, wp.constructCircuitAddr(wp.mesh.GetPossiblePeers(), target)...)
 
 	//	pp.Println("@final_address/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
+	pp.Println("@FINAL_ADDRESS")
 	core.PrintPeerAddr(addr)
 
-	err = wp.localNode.Connect(context.Background(), daddr)
+	err = wp.localNode.Connect(context.Background(), addr)
 	if err == nil {
 		curcuit := true
 		for cid, rconn := range wp.mesh.Host.Network().ConnsToPeer(addr.ID) {
@@ -178,4 +145,36 @@ func removeDuplicateAddrs(strSlice []multiaddr.Multiaddr) []multiaddr.Multiaddr 
 	}
 
 	return returnSlice
+}
+
+// /p2p/QmRelay/p2p-circuit/p2p/QmAlice
+
+func (wp *WebProxy) constructCircuitAddr(relays []peer.ID, target string) []multiaddr.Multiaddr {
+	// return fmt.Sprintf("/p2p/%s/p2p-circuit/p2p/%s", target, target)
+
+	addrs := make([]multiaddr.Multiaddr, 0)
+
+	for _, relay := range relays {
+		pp.Println("@processing_relay", relay.String())
+
+		addrInfo, err := wp.getDHTAddrs(relay)
+		if err != nil || len(addrInfo.Addrs) == 0 {
+			continue
+		}
+
+		for _, addr := range addrInfo.Addrs {
+			ma, err := multiaddr.NewMultiaddr(fmt.Sprintf("%s/p2p/%s/p2p-circuit/p2p/%s", addr.String(), relay.String(), target))
+			if err != nil {
+				continue
+			}
+			addrs = append(addrs, ma)
+		}
+
+		if len(addrs) > 64 {
+			break
+		}
+
+	}
+
+	return addrs
 }

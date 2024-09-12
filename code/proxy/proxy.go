@@ -11,11 +11,10 @@ import (
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
-	"github.com/temphia/lpweb/code/core/seekers"
-	"github.com/temphia/lpweb/code/core/seekers/etcd"
 	"github.com/temphia/lpweb/code/proxy/streamer"
 )
 
@@ -23,7 +22,6 @@ type WebProxy struct {
 	mesh      *mesh.Mesh
 	localNode host.Host
 	proxy     *goproxy.ProxyHttpServer
-	seekers   []seekers.Seeker
 
 	upNodes    map[string]*UpNode
 	upnodeLock sync.Mutex
@@ -49,10 +47,8 @@ func NewWebProxy(port int) *WebProxy {
 
 	log.Println("p2p_relay@", m.Host.ID().String())
 	for _, m := range m.Host.Addrs() {
-		log.Println("httpd@", m.String())
+		log.Println("httpd@proxy", m.String())
 	}
-
-	seeker := etcd.New(conf.UUID)
 
 	instance := &WebProxy{
 		mesh:       m,
@@ -63,10 +59,6 @@ func NewWebProxy(port int) *WebProxy {
 		requests:   make(map[uint32]*streamer.Streamer),
 		reqMLock:   sync.Mutex{},
 		upnodeLock: sync.Mutex{},
-
-		seekers: []seekers.Seeker{
-			seeker,
-		},
 	}
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp3, func(s network.Stream) {
@@ -105,4 +97,9 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wp.proxy.ServeHTTP(w, r)
+}
+
+func (wp *WebProxy) GetPeerKey() peer.ID {
+	return wp.mesh.GetPeerKey()
+
 }

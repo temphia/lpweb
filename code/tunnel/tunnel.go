@@ -36,7 +36,7 @@ func NewHttpTunnel(port int) *HttpTunnel {
 
 	log.Println("p2p_relay@", m.Host.ID().String())
 	for _, m := range m.Host.Addrs() {
-		log.Println("httpd@", m.String())
+		log.Println("httpd@tunnel", m.String())
 	}
 
 	seeker := etcd.New(conf.UUID)

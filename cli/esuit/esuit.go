@@ -42,7 +42,8 @@ func main() {
 		panic(err)
 	}
 
-	pp.Println("@RAW_PEER_KEY", peerKey)
+	pp.Println("@SERVER_PEER_KEY", suit.sMesh.GetPeerKey().String())
+	pp.Println("@CLIENT_PEER_KEY", suit.proxy.GetPeerKey().String())
 
 	pp.Println(string(core.EncodeToSafeString(peerKey)), "@")
 

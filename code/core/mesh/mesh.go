@@ -102,13 +102,13 @@ func New(keystr string, port int) (*Mesh, error) {
 		fmt.Sprintf("/ip4/0.0.0.0/udp/%d/quic", port),
 	}
 
-	// pubIp, err := findPublicIpAddr()
-	// if err == nil {
-	// 	pp.Println("@listening_to_public_addrs", pubIp)
+	pubIp, err := findPublicIpAddr()
+	if err == nil {
+		pp.Println("@listening_to_public_addrs", pubIp)
 
-	// 	baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
-	// 	baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
-	// }
+		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/tcp/%d", pubIp, port))
+		baseAddrs = append(baseAddrs, fmt.Sprintf("/ip4/%s/udp/%d/quic", pubIp, port))
+	}
 
 	hps, dh, err := NewHostWithKey(privateKey, port, baseAddrs)
 	if err != nil {
@@ -154,6 +154,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 			addrs[pi.ID] = pi
 		}
 		pi.Addrs = append(pi.Addrs, pii.Addrs...)
+
 	}
 
 	finalAddrs := make([]peer.AddrInfo, 0, len(BootStrapPeers))
@@ -180,9 +181,8 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 		libp2p.Transport(quic.NewTransport),
 		libp2p.EnableRelay(),
 		libp2p.ResourceManager(rm),
-		libp2p.ForceReachabilityPrivate(),
-
-		libp2p.PrivateNetwork(nil),
+		// libp2p.ForceReachabilityPrivate(),
+		// libp2p.PrivateNetwork(nil),
 
 		libp2p.EnableHolePunching(holepunch.WithTracer(&tracer{}), func(s *holepunch.Service) error {
 			hps = s
@@ -233,6 +233,10 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 
 func (m *Mesh) GetPeerKey() peer.ID {
 	return m.Host.ID()
+}
+
+func (m *Mesh) GetPossiblePeers() []peer.ID {
+	return m.Host.Peerstore().Peers()
 }
 
 func getFreePort() (int, error) {
