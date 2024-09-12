@@ -71,6 +71,8 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	daddr, err := wp.getDHTAddrs(addr.ID)
 	if err == nil {
 		addr.Addrs = append(addr.Addrs, daddr.Addrs...)
+	} else {
+		pp.Println("@err_getting_dht_addrs", err.Error())
 	}
 
 	addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
@@ -130,6 +132,26 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 }
 
 func (wp *WebProxy) getDHTAddrs(pi peer.ID) (peer.AddrInfo, error) {
+	pp.Println("@DHT_ADDRS", pi.String())
+
+	addr, err := wp.mesh.DHT.FindPeer(context.Background(), pi)
+	if err == nil {
+		return addr, nil
+	}
+
+	size, err := wp.mesh.DHT.NetworkSize()
+	if err != nil {
+		pp.Println("@err_getting_network_size", err.Error())
+	}
+
+	wp.mesh.DHT.RoutingTable().Print()
+
+	pp.Println("@MODE", wp.mesh.DHT.Mode())
+
+	pp.Println("@D_STAT", wp.mesh.DHT.GetRoutingTableDiversityStats())
+
+	pp.Println("@DHT_SIZE", size)
+
 	return wp.mesh.DHT.FindPeer(context.Background(), pi)
 }
 
@@ -154,27 +176,36 @@ func (wp *WebProxy) constructCircuitAddr(relays []peer.ID, target string) []mult
 
 	addrs := make([]multiaddr.Multiaddr, 0)
 
-	for _, relay := range relays {
-		pp.Println("@processing_relay", relay.String())
-
-		addrInfo, err := wp.getDHTAddrs(relay)
-		if err != nil || len(addrInfo.Addrs) == 0 {
-			continue
-		}
-
-		for _, addr := range addrInfo.Addrs {
-			ma, err := multiaddr.NewMultiaddr(fmt.Sprintf("%s/p2p/%s/p2p-circuit/p2p/%s", addr.String(), relay.String(), target))
-			if err != nil {
-				continue
-			}
-			addrs = append(addrs, ma)
-		}
-
-		if len(addrs) > 64 {
-			break
-		}
-
+	ma, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip6/2604:a880:1:20::204:4001/udp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ/p2p-circuit/p2p/%s", target))
+	if err == nil {
+		addrs = append(addrs, ma)
 	}
 
+	pp.Println("err", err)
+
 	return addrs
+
+	// for _, relay := range relays {
+	// 	pp.Println("@processing_relay", relay.String())
+
+	// 	addrInfo, err := wp.getDHTAddrs(relay)
+	// 	if err != nil || len(addrInfo.Addrs) == 0 {
+	// 		continue
+	// 	}
+
+	// 	for _, addr := range addrInfo.Addrs {
+	// 		ma, err := multiaddr.NewMultiaddr(fmt.Sprintf("%s/p2p/%s/p2p-circuit/p2p/%s", addr.String(), relay.String(), target))
+	// 		if err != nil {
+	// 			continue
+	// 		}
+	// 		addrs = append(addrs, ma)
+	// 	}
+
+	// 	if len(addrs) > 64 {
+	// 		break
+	// 	}
+
+	// }
+
+	// return addrs
 }

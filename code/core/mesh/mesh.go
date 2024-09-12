@@ -198,7 +198,13 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 	}
 
 	// Create DHT Subsystem
-	dhtOut = dht.NewDHTClient(ctx, node, datastore.NewMapDatastore())
+	dhtOut = dht.NewDHT(ctx, node, datastore.NewMapDatastore())
+
+	err = dhtOut.Bootstrap(ctx)
+	if err != nil {
+		pp.Println("@err_bootstrapping_dht", err.Error())
+		return
+	}
 
 	// Let's connect to the bootstrap nodes first. They will tell us about the
 	// other nodes in the network.
