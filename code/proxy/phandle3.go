@@ -11,13 +11,15 @@ import (
 	"strings"
 
 	"github.com/k0kubun/pp"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/temphia/lpweb/code/core"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/wire"
 )
 
 const fragmentSize = 1024 * 256
 
-func (wp *WebProxy) handleHttp3(r *http.Request, w http.ResponseWriter) {
+func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	hash := extractHostHash(r.Host)
 
 	log.Println("@new_normal_conn", r.Host)
@@ -177,5 +179,25 @@ func (wp *WebProxy) handleHttpWS(r *http.Request, w http.ResponseWriter) {
 }
 
 func extractHostHash(host string) string {
-	return strings.Split(host, ".")[0]
+
+	pubkeyEncoded := strings.Split(host, ".")[0]
+
+	pp.Println("@extractHostHash", pubkeyEncoded)
+
+	pubkeyDecoded, err := core.DecodeToBytes(pubkeyEncoded)
+	if err != nil {
+		panic(err)
+	}
+
+	pp.Println("@RAW_PEER_KEY", pubkeyDecoded)
+
+	//added := append([]byte{0}, pubkeyDecoded...)
+
+	peerId, err := peer.IDFromBytes(pubkeyDecoded)
+	if err != nil {
+		panic(err)
+	}
+
+	return peerId.String()
+
 }

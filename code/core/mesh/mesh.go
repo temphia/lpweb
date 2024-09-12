@@ -231,6 +231,10 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 	return hps, dhtOut, nil
 }
 
+func (m *Mesh) GetPeerKey() peer.ID {
+	return m.Host.ID()
+}
+
 func getFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {
