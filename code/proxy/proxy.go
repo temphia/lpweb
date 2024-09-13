@@ -96,3 +96,8 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	wp.proxy.ServeHTTP(w, r)
 }
+
+func deny(s network.Stream) {
+	pp.Println("proxy won't accept lpweb request, it proxies web reqest to libweb")
+	s.Close()
+}
