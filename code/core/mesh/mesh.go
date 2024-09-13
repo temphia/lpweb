@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ipfs/go-datastore"
 	"github.com/k0kubun/pp"
@@ -20,6 +21,9 @@ import (
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
+
+	drouting "github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	dutil "github.com/libp2p/go-libp2p/p2p/discovery/util"
 
 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
 	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
@@ -58,6 +62,11 @@ type Mesh struct {
 	ResourceManager *ResourceManager
 
 	HolePunchService *holepunch.Service
+
+	rendezvousDiscovery *drouting.RoutingDiscovery
+
+	altPeersStore map[peer.ID]*peer.AddrInfo
+	altPeersLock  sync.Mutex
 }
 
 func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
@@ -117,14 +126,23 @@ func New(keystr string, port int) (*Mesh, error) {
 
 	host := dh.Host()
 
+	routingDiscovery := drouting.NewRoutingDiscovery(dh)
+
 	mesh := &Mesh{
-		Host: host,
-		DHT:  dh,
-		Port: port,
-		//		PublicIp:         pubIp,
-		ResourceManager:  host.Network().ResourceManager().(*ResourceManager),
-		HolePunchService: hps,
+		Host:                host,
+		DHT:                 dh,
+		Port:                port,
+		PublicIp:            pubIp,
+		ResourceManager:     host.Network().ResourceManager().(*ResourceManager),
+		HolePunchService:    hps,
+		altPeersStore:       make(map[peer.ID]*peer.AddrInfo),
+		altPeersLock:        sync.Mutex{},
+		rendezvousDiscovery: routingDiscovery,
 	}
+
+	go mesh.RunControlLoop()
+
+	time.Sleep(time.Second * 2)
 
 	return mesh, nil
 
@@ -157,11 +175,11 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 
 	}
 
-	finalAddrs := make([]peer.AddrInfo, 0, len(BootStrapPeers))
+	// finalAddrs := make([]peer.AddrInfo, 0, len(BootStrapPeers))
 
-	for _, addr := range addrs {
-		finalAddrs = append(finalAddrs, *addr)
-	}
+	// for _, addr := range addrs {
+	// 	finalAddrs = append(finalAddrs, *addr)
+	// }
 
 	rm, err := NewResourceManager()
 	if err != nil {
@@ -170,9 +188,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 
 	// Create libp2p node
 	node, err := libp2p.New(
-		libp2p.EnableAutoNATv2(),
 		libp2p.UserAgent("lpweb"),
-		libp2p.EnableNATService(),
 		libp2p.ListenAddrStrings(baseAddrs...),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
@@ -189,7 +205,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 			return nil
 		}),
 
-		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
+		// libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
 		// libp2p.FallbackDefaults,
 	)
 
@@ -235,6 +251,66 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 	}
 
 	return hps, dhtOut, nil
+}
+
+const (
+	Rendezvous = "@lpweb_temple"
+)
+
+func (m *Mesh) RunControlLoop() {
+
+	ctx := context.Background()
+
+	for {
+
+		fmt.Println("Announcing ourselves...", m.Host.ID())
+		dutil.Advertise(ctx, m.rendezvousDiscovery, Rendezvous)
+		fmt.Println("Successfully announced!")
+
+		fmt.Println("Searching for other peers...")
+		peerChan, err := m.rendezvousDiscovery.FindPeers(ctx, Rendezvous)
+		if err == nil {
+
+			fmt.Println("Found peers:", len(peerChan))
+
+			for peer := range peerChan {
+				if peer.ID == m.Host.ID() {
+					continue
+				}
+
+				m.altPeersLock.Lock()
+				m.altPeersStore[peer.ID] = &peer
+				m.altPeersLock.Unlock()
+
+			}
+		}
+
+		time.Sleep(time.Second * 5)
+
+	}
+
+}
+
+func (m *Mesh) GetAltPeer(peer peer.ID) *peer.AddrInfo {
+	m.altPeersLock.Lock()
+	defer m.altPeersLock.Unlock()
+
+	return m.altPeersStore[peer]
+}
+
+func (m *Mesh) SetAltPeers(pi *peer.AddrInfo) {
+	m.altPeersLock.Lock()
+	defer m.altPeersLock.Unlock()
+
+	m.altPeersStore[pi.ID] = pi
+
+}
+
+func (m *Mesh) GetSelfPeerAddr() *peer.AddrInfo {
+	return &peer.AddrInfo{
+		ID:    m.Host.ID(),
+		Addrs: m.Host.Addrs(),
+	}
 }
 
 func (m *Mesh) GetPeerKey() peer.ID {

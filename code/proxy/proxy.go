@@ -11,7 +11,6 @@ import (
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
-	"github.com/libp2p/go-libp2p/core/peer"
 
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
@@ -19,7 +18,7 @@ import (
 )
 
 type WebProxy struct {
-	mesh      *mesh.Mesh
+	Mesh      *mesh.Mesh
 	localNode host.Host
 	proxy     *goproxy.ProxyHttpServer
 
@@ -51,7 +50,7 @@ func NewWebProxy(port int) *WebProxy {
 	}
 
 	instance := &WebProxy{
-		mesh:       m,
+		Mesh:       m,
 		localNode:  m.Host,
 		proxy:      proxy,
 		proxyPort:  port,
@@ -97,9 +96,4 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wp.proxy.ServeHTTP(w, r)
-}
-
-func (wp *WebProxy) GetPeerKey() peer.ID {
-	return wp.mesh.GetPeerKey()
-
 }

@@ -76,7 +76,10 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	}
 
 	addr.Addrs = removeDuplicateAddrs(daddr.Addrs)
-	addr.Addrs = append(addr.Addrs, wp.constructCircuitAddr(wp.mesh.GetPossiblePeers(), target)...)
+
+	if len(addr.Addrs) == 0 {
+		addr.Addrs = append(addr.Addrs, wp.constructCircuitAddr(wp.Mesh.GetPossiblePeers(), target)...)
+	}
 
 	//	pp.Println("@final_address/len", len(wp.mesh.Host.Network().ConnsToPeer(addr.ID)))
 	pp.Println("@FINAL_ADDRESS")
@@ -85,7 +88,7 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	err = wp.localNode.Connect(context.Background(), addr)
 	if err == nil {
 		curcuit := true
-		for cid, rconn := range wp.mesh.Host.Network().ConnsToPeer(addr.ID) {
+		for cid, rconn := range wp.Mesh.Host.Network().ConnsToPeer(addr.ID) {
 			pp.Println("@conn", cid, rconn.RemoteMultiaddr().String())
 			if !strings.Contains(rconn.RemoteMultiaddr().String(), "p2p-circuit") {
 				pp.Println("@found_direct_connection")
@@ -101,7 +104,7 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 			doneChan := make(chan struct{}, 1)
 
 			go func() {
-				err := wp.mesh.HolePunchService.DirectConnect(addr.ID)
+				err := wp.Mesh.HolePunchService.DirectConnect(addr.ID)
 				if err != nil {
 					pp.Println("@err_while_direct_connect", err.Error())
 				} else {
@@ -127,6 +130,7 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	}
 
 	pp.Println("@could_not_connect", err.Error())
+	fmt.Println(err)
 
 	return nil, err
 }
@@ -134,25 +138,36 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 func (wp *WebProxy) getDHTAddrs(pi peer.ID) (peer.AddrInfo, error) {
 	pp.Println("@DHT_ADDRS", pi.String())
 
-	addr, err := wp.mesh.DHT.FindPeer(context.Background(), pi)
+	addr, err := wp.Mesh.DHT.FindPeer(context.Background(), pi)
 	if err == nil {
 		return addr, nil
 	}
 
-	size, err := wp.mesh.DHT.NetworkSize()
+	size, err := wp.Mesh.DHT.NetworkSize()
 	if err != nil {
 		pp.Println("@err_getting_network_size", err.Error())
 	}
 
-	wp.mesh.DHT.RoutingTable().Print()
+	wp.Mesh.DHT.RoutingTable().Print()
 
-	pp.Println("@MODE", wp.mesh.DHT.Mode())
+	pp.Println("@MODE", wp.Mesh.DHT.Mode())
 
-	pp.Println("@D_STAT", wp.mesh.DHT.GetRoutingTableDiversityStats())
+	pp.Println("@D_STAT", wp.Mesh.DHT.GetRoutingTableDiversityStats())
 
 	pp.Println("@DHT_SIZE", size)
 
-	return wp.mesh.DHT.FindPeer(context.Background(), pi)
+	addr, err = wp.Mesh.DHT.FindPeer(context.Background(), pi)
+	if err == nil {
+		return addr, nil
+	}
+
+	altAddr := wp.Mesh.GetAltPeer(pi)
+	if altAddr != nil {
+		addr.Addrs = append(addr.Addrs, altAddr.Addrs...)
+	}
+
+	return addr, err
+
 }
 
 func removeDuplicateAddrs(strSlice []multiaddr.Multiaddr) []multiaddr.Multiaddr {

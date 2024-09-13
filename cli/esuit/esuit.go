@@ -43,7 +43,10 @@ func main() {
 	}
 
 	pp.Println("@SERVER_PEER_KEY", suit.sMesh.GetPeerKey().String())
-	pp.Println("@CLIENT_PEER_KEY", suit.proxy.GetPeerKey().String())
+	pp.Println("@CLIENT_PEER_KEY", suit.proxy.Mesh.GetPeerKey().String())
+
+	suit.sMesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
+	suit.proxy.Mesh.SetAltPeers(suit.sMesh.GetSelfPeerAddr())
 
 	pp.Println(string(core.EncodeToSafeString(peerKey)), "@")
 
