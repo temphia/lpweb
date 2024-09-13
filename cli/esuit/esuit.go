@@ -48,6 +48,8 @@ func main() {
 	suit.sMesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
 	suit.proxy.Mesh.SetAltPeers(suit.sMesh.GetSelfPeerAddr())
 
+	sMesh.Host.SetStreamHandler(mesh.ProtocolHttp3, suit.Handler)
+
 	pp.Println(string(core.EncodeToSafeString(peerKey)), "@")
 
 	url, err := url.Parse(fmt.Sprintf("http://%s.localhost:8001/", string(core.EncodeToSafeString(peerKey))))
