@@ -10,45 +10,42 @@ import (
 	"github.com/temphia/lpweb/code/core"
 	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/proxy"
+	"github.com/temphia/lpweb/code/tunnel"
 )
 
 type Esuit struct {
-	sMesh *mesh.Mesh
+	tunnel *tunnel.HttpTunnel
 
 	proxy *proxy.WebProxy
 }
 
 func main() {
-	//	fmt.Println("Hello World")
-
-	sMesh, err := mesh.New("1234567890451678scfagvhbjknlmagvshjbkntcaytvsuyghukfcgv", 0)
-	if err != nil {
-		panic(err)
-	}
 
 	wproxy := proxy.NewWebProxy(0)
 
+	tunnel := tunnel.NewHttpTunnel(0)
+
 	suit := &Esuit{
-		sMesh: sMesh,
-		proxy: wproxy,
+		tunnel: tunnel,
+		proxy:  wproxy,
 	}
 
 	go suit.StartHttpServer()
 
 	go suit.StartFileServer()
 
-	peerKey, err := suit.sMesh.GetPeerKey().MarshalBinary()
+	peerKey, err := suit.tunnel.Mesh.GetPeerKey().MarshalBinary()
 	if err != nil {
 		panic(err)
 	}
 
-	pp.Println("@SERVER_PEER_KEY", suit.sMesh.GetPeerKey().String())
+	pp.Println("@SERVER_PEER_KEY", suit.tunnel.Mesh.GetPeerKey().String())
 	pp.Println("@CLIENT_PEER_KEY", suit.proxy.Mesh.GetPeerKey().String())
 
-	suit.sMesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
-	suit.proxy.Mesh.SetAltPeers(suit.sMesh.GetSelfPeerAddr())
+	suit.tunnel.Mesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
+	suit.proxy.Mesh.SetAltPeers(suit.tunnel.Mesh.GetSelfPeerAddr())
 
-	sMesh.Host.SetStreamHandler(mesh.ProtocolHttp3, suit.Handler)
+	tunnel.Mesh.Host.SetStreamHandler(mesh.ProtocolHttp3, suit.Handler)
 
 	pp.Println(string(core.EncodeToSafeString(peerKey)), "@")
 

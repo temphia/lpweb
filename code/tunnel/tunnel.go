@@ -14,7 +14,7 @@ import (
 )
 
 type HttpTunnel struct {
-	mesh         *mesh.Mesh
+	Mesh         *mesh.Mesh
 	tunnelToPort int
 	localNode    host.Host
 
@@ -36,7 +36,7 @@ func NewHttpTunnel(port int) *HttpTunnel {
 	}
 
 	instance := &HttpTunnel{
-		mesh:           m,
+		Mesh:           m,
 		localNode:      m.Host,
 		tunnelToPort:   port,
 		activeStramers: make(map[string]*streamer.Streamer),
