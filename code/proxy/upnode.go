@@ -62,11 +62,18 @@ func (wp *WebProxy) getExitNode(target string) *UpNode {
 // convert pubkeyhash like 12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE to actual connectable
 // address /ip4/127.0.0.1/tcp/8083/p2p/12D3KooWQbUAAEbYha8TxxsKrsxqbpY5dxPdGwcTYgSaTHAFcngE like this and connect
 func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
+	pid, err := peer.Decode(target)
+	if err != nil {
+		pp.Println("@decode/err", err.Error())
+		return nil, err
+	}
 
 	addr := peer.AddrInfo{
-		ID:    peer.ID(target),
+		ID:    pid,
 		Addrs: make([]multiaddr.Multiaddr, 0),
 	}
+
+	pp.Println("@resolveAndConnect/1", string(peer.ID(target)))
 
 	daddr, err := wp.getDHTAddrs(addr.ID)
 	if err == nil {
@@ -130,41 +137,47 @@ func (wp *WebProxy) resolveAndConnect(target string) (*peer.AddrInfo, error) {
 	}
 
 	pp.Println("@could_not_connect", err.Error())
-	fmt.Println(err)
+	pp.Println(err)
 
 	return nil, err
 }
 
 func (wp *WebProxy) getDHTAddrs(pi peer.ID) (peer.AddrInfo, error) {
-	pp.Println("@DHT_ADDRS", pi.String())
+	pp.Println("@getDHTAddrs/1", pi.String())
+	pp.Println("@getDHTAddrs/2", pi)
 
 	addr, err := wp.Mesh.DHT.FindPeer(context.Background(), pi)
 	if err == nil {
 		return addr, nil
 	}
 
-	size, err := wp.Mesh.DHT.NetworkSize()
-	if err != nil {
-		pp.Println("@err_getting_network_size", err.Error())
-	}
+	pp.Println("@getDHTAddrs/3")
 
-	wp.Mesh.DHT.RoutingTable().Print()
+	addr.ID = pi
 
-	pp.Println("@MODE", wp.Mesh.DHT.Mode())
+	// size, err := wp.Mesh.DHT.NetworkSize()
+	// if err != nil {
+	// 	pp.Println("@err_getting_network_size", err.Error())
+	// }
 
-	pp.Println("@D_STAT", wp.Mesh.DHT.GetRoutingTableDiversityStats())
+	// wp.Mesh.DHT.RoutingTable().Print()
 
-	pp.Println("@DHT_SIZE", size)
+	// pp.Println("@MODE", wp.Mesh.DHT.Mode())
 
-	addr, err = wp.Mesh.DHT.FindPeer(context.Background(), pi)
-	if err == nil {
+	// pp.Println("@D_STAT", wp.Mesh.DHT.GetRoutingTableDiversityStats())
+
+	// pp.Println("@DHT_SIZE", size)
+
+	pp.Println("@getDHTAddrs/4")
+
+	altAddr := wp.Mesh.GetAltPeer(string(pi))
+	if altAddr != nil {
+		pp.Println("@using_alt_addr", altAddr.String())
+		addr.Addrs = append(addr.Addrs, altAddr.Addrs...)
 		return addr, nil
 	}
 
-	altAddr := wp.Mesh.GetAltPeer(pi)
-	if altAddr != nil {
-		addr.Addrs = append(addr.Addrs, altAddr.Addrs...)
-	}
+	pp.Println("@getDHTAddrs/5")
 
 	return addr, err
 

@@ -30,6 +30,8 @@ import (
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 
 	ma "github.com/multiformats/go-multiaddr"
+
+	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
 const (
@@ -65,8 +67,11 @@ type Mesh struct {
 
 	rendezvousDiscovery *drouting.RoutingDiscovery
 
-	altPeersStore map[peer.ID]*peer.AddrInfo
+	altPeersStore map[string]*peer.AddrInfo
 	altPeersLock  sync.Mutex
+
+	// mdns
+	mdnsDiscovery mdns.Service
 }
 
 func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
@@ -135,9 +140,18 @@ func New(keystr string, port int) (*Mesh, error) {
 		PublicIp:            pubIp,
 		ResourceManager:     host.Network().ResourceManager().(*ResourceManager),
 		HolePunchService:    hps,
-		altPeersStore:       make(map[peer.ID]*peer.AddrInfo),
+		altPeersStore:       make(map[string]*peer.AddrInfo),
 		altPeersLock:        sync.Mutex{},
 		rendezvousDiscovery: routingDiscovery,
+	}
+
+	mdnsvc := mdns.NewMdnsService(mesh.Host, Rendezvous, mesh)
+	mesh.mdnsDiscovery = mdnsvc
+
+	err = mdnsvc.Start()
+	if err != nil {
+		pp.Println("@err_mdns_start", err.Error())
+		return nil, err
 	}
 
 	go mesh.RunControlLoop()
@@ -261,17 +275,24 @@ func (m *Mesh) RunControlLoop() {
 
 	ctx := context.Background()
 
+	count := 0
+
 	for {
+		count++
 
-		fmt.Println("Announcing ourselves...", m.Host.ID())
+		//		fmt.Println("Announcing ourselves...", m.Host.ID())
 		dutil.Advertise(ctx, m.rendezvousDiscovery, Rendezvous)
-		fmt.Println("Successfully announced!")
+		//		fmt.Println("Successfully announced!")
 
-		fmt.Println("Searching for other peers...")
+		//		fmt.Println("Searching for other peers...")
 		peerChan, err := m.rendezvousDiscovery.FindPeers(ctx, Rendezvous)
 		if err == nil {
 
-			fmt.Println("Found peers:", len(peerChan))
+			fmt.Println("Peer stat:", len(peerChan), len(m.altPeersStore))
+
+			// for k, v := range m.altPeersStore {
+			// 	pp.Println("@alt_peer", m.Host.ID().String(), k, v.String())
+			// }
 
 			for peer := range peerChan {
 				if peer.ID == m.Host.ID() {
@@ -279,21 +300,36 @@ func (m *Mesh) RunControlLoop() {
 				}
 
 				m.altPeersLock.Lock()
-				m.altPeersStore[peer.ID] = &peer
+				m.altPeersStore[peer.ID.String()] = &peer
 				m.altPeersLock.Unlock()
 
 			}
 		}
 
-		time.Sleep(time.Second * 5)
+		if count > 4 {
+			time.Sleep(time.Second * 60)
+		} else {
+			time.Sleep(time.Second * 5)
+		}
 
 	}
 
 }
 
-func (m *Mesh) GetAltPeer(peer peer.ID) *peer.AddrInfo {
+func (m *Mesh) HandlePeerFound(pi peer.AddrInfo) {
+	pp.Println("@peer_found/DHT", pi.ID.String())
+
 	m.altPeersLock.Lock()
 	defer m.altPeersLock.Unlock()
+
+	m.altPeersStore[pi.ID.String()] = &pi
+}
+
+func (m *Mesh) GetAltPeer(peer string) *peer.AddrInfo {
+	m.altPeersLock.Lock()
+	defer m.altPeersLock.Unlock()
+
+	pp.Println("@GetAltPeer")
 
 	return m.altPeersStore[peer]
 }
@@ -302,7 +338,7 @@ func (m *Mesh) SetAltPeers(pi *peer.AddrInfo) {
 	m.altPeersLock.Lock()
 	defer m.altPeersLock.Unlock()
 
-	m.altPeersStore[pi.ID] = pi
+	m.altPeersStore[pi.ID.String()] = pi
 
 }
 

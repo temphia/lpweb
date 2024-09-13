@@ -198,6 +198,8 @@ func extractHostHash(host string) string {
 		panic(err)
 	}
 
+	pp.Println("@FINAL", peerId.String())
+
 	return peerId.String()
 
 }
