@@ -22,7 +22,6 @@ type WebProxy struct {
 	localNode host.Host
 	proxy     *goproxy.ProxyHttpServer
 
-	upNodes    map[string]*UpNode
 	upnodeLock sync.Mutex
 
 	proxyPort int
@@ -50,11 +49,11 @@ func NewWebProxy(port int) *WebProxy {
 	}
 
 	instance := &WebProxy{
-		Mesh:       m,
-		localNode:  m.Host,
-		proxy:      proxy,
-		proxyPort:  port,
-		upNodes:    make(map[string]*UpNode),
+		Mesh:      m,
+		localNode: m.Host,
+		proxy:     proxy,
+		proxyPort: port,
+		//upNodes:    make(map[string]*UpNode),
 		requests:   make(map[uint32]*streamer.Streamer),
 		reqMLock:   sync.Mutex{},
 		upnodeLock: sync.Mutex{},

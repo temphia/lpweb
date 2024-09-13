@@ -31,7 +31,7 @@ type Streamer struct {
 
 	OutData      []byte
 	ActiveStream network.Stream
-	TargetPeer   peer.ID
+	TargetAddr   peer.AddrInfo
 
 	// DonePacketFrags []doneOffset
 

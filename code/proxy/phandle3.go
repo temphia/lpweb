@@ -14,6 +14,7 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/temphia/lpweb/code/core"
 	"github.com/temphia/lpweb/code/core/mesh"
+	"github.com/temphia/lpweb/code/proxy/streamer"
 	"github.com/temphia/lpweb/code/wire"
 )
 
@@ -37,10 +38,10 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 		panic(err)
 	}
 
-	log.Println("@handleHttp2/new_stream/3", enode.addr.ID.String())
-	log.Println("addr_len", len(enode.addr.Addrs))
+	log.Println("@handleHttp2/new_stream/3", enode.TargetAddr.ID.String())
+	log.Println("addr_len", len(enode.TargetAddr.Addrs))
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.addr.ID, mesh.ProtocolHttp3)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolHttp3)
 	if err != nil {
 		log.Println("@err_new_stream", err.Error())
 		w.WriteHeader(http.StatusBadGateway)
@@ -48,6 +49,10 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	}
 
 	id := wire.GetRequestId()
+
+	enode.RequestId = id
+	enode.ActiveStream = stream
+	enode.Context = context.TODO()
 
 	_, err = stream.Write(id)
 	if err != nil {
@@ -176,6 +181,29 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 
 func (wp *WebProxy) handleHttpWS(r *http.Request, w http.ResponseWriter) {
 
+}
+
+// utils
+
+func (wp *WebProxy) getExitNode(target string) *streamer.Streamer {
+
+	addr, err := streamer.ResolveAndConnect(wp.Mesh, target)
+	if err != nil {
+		pp.Println("@err_creating_upnode", err)
+		return nil
+	}
+
+	enode := &streamer.Streamer{
+		LocalNode:    wp.localNode,
+		TargetAddr:   *addr,
+		Context:      context.Background(),
+		ActiveStream: nil,
+		RequestId:    nil,
+		InData:       nil,
+		OutData:      nil,
+	}
+
+	return enode
 }
 
 func extractHostHash(host string) string {
