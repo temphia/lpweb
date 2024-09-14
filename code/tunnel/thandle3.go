@@ -14,8 +14,6 @@ import (
 	"github.com/temphia/lpweb/code/wire"
 )
 
-const fragmentSize = 10
-
 func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 
 	defer stream.Close()
@@ -97,7 +95,7 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 	pp.Println("@write_data", string(out))
 
 	offset := uint32(0)
-	fbuf := make([]byte, fragmentSize)
+	fbuf := make([]byte, wire.FragmentSize)
 
 	pp.Println("RESPONSE_BODY")
 

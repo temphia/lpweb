@@ -22,6 +22,8 @@ type Packet struct {
 	Data   []byte
 }
 
+const FragmentSize = 16
+
 func (p *Packet) String() string {
 	return fmt.Sprintf("Packet{\n\tPType: %d,\n\t Offset: %d,\n\t Total: %d,\n\t Data: SIZE<%d>}", p.PType, p.Offset, p.Total, len(p.Data))
 }

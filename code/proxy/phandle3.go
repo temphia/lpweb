@@ -18,8 +18,6 @@ import (
 	"github.com/temphia/lpweb/code/wire"
 )
 
-const fragmentSize = 1024 * 256
-
 func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	hash := extractHostHash(r.Host)
 
@@ -71,7 +69,7 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	if r.ContentLength > 0 {
 
 		offset := uint32(0)
-		fbuf := make([]byte, fragmentSize)
+		fbuf := make([]byte, wire.FragmentSize)
 
 		for {
 			pp.Println("@offset", offset)
