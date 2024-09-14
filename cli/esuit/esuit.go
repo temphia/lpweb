@@ -45,9 +45,11 @@ func main() {
 	suit.tunnel.Mesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
 	suit.proxy.Mesh.SetAltPeers(suit.tunnel.Mesh.GetSelfPeerAddr())
 
-	pp.Println(string(core.EncodeToSafeString(peerKey)), "@")
+	entryHttpUrl := fmt.Sprintf("http://%s.localhost:8001/", string(core.EncodeToSafeString(peerKey)))
 
-	url, err := url.Parse(fmt.Sprintf("http://%s.localhost:8001/", string(core.EncodeToSafeString(peerKey))))
+	pp.Println("@serving_in_libp2p", entryHttpUrl)
+
+	url, err := url.Parse(entryHttpUrl)
 	if err != nil {
 		panic(err)
 	}
