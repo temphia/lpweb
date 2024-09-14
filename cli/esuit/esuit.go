@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -76,6 +77,25 @@ func main() {
 	}
 
 	pp.Println("@RESPONSE_BODY", string(out))
+
+	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader([]byte("hello world")))
+	if err != nil {
+		panic(err)
+	}
+
+	resp2, err := http.DefaultClient.Do(req2)
+	if err != nil {
+		panic(err)
+	}
+
+	defer resp2.Body.Close()
+
+	out2, err := io.ReadAll(resp2.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(out2))
 
 	// wait here forever
 	select {}
