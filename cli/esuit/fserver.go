@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/k0kubun/pp"
 )
@@ -35,7 +36,7 @@ func (e *Esuit) StartFileServer() {
 		w.Write([]byte(fmt.Sprintf("uploaded %d bytes \n\n%s", len(out), string(out))))
 	})
 
-	err := http.ListenAndServe(":7704", server)
+	err := http.ListenAndServe(":"+strconv.Itoa(tunnelPort), server)
 	if err != nil {
 		panic(err)
 	}

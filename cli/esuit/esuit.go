@@ -20,11 +20,16 @@ type Esuit struct {
 	proxy *proxy.WebProxy
 }
 
+const (
+	tunnelPort = 7704
+	proxyPort  = 7703
+)
+
 func main() {
 
-	wproxy := proxy.NewWebProxy(0)
+	wproxy := proxy.NewWebProxy(proxyPort)
 
-	tunnel := tunnel.NewHttpTunnel(7704)
+	tunnel := tunnel.NewHttpTunnel(tunnelPort)
 
 	suit := &Esuit{
 		tunnel: tunnel,
@@ -46,17 +51,17 @@ func main() {
 	suit.tunnel.Mesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
 	suit.proxy.Mesh.SetAltPeers(suit.tunnel.Mesh.GetSelfPeerAddr())
 
-	entryHttpUrl := fmt.Sprintf("http://%s.localhost:7703/", string(core.EncodeToSafeString(peerKey)))
+	entryHttpUrl := fmt.Sprintf("http://%s.localhost:%d/", string(core.EncodeToSafeString(peerKey)), proxyPort)
 
 	pp.Println("@serving_in_libp2p", entryHttpUrl)
 
 	time.Sleep(5 * time.Second)
 	fmt.Printf("\n\n\n\n\n\n\n\n")
 
-	// err = tryNormalHttp(entryHttpUrl)
-	// if err != nil {
-	// 	panic(err.Error())
-	// }
+	err = tryNormalHttp(entryHttpUrl)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	err = tryUpload(entryHttpUrl)
 	if err != nil {

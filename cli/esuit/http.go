@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/k0kubun/pp"
@@ -10,7 +11,7 @@ import (
 func (e *Esuit) StartHttpServer() {
 
 	server := &http.Server{
-		Addr: ":7703",
+		Addr: ":" + strconv.Itoa(proxyPort),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			pp.Println("@ALL_INTERCEPT", r.URL.String())
