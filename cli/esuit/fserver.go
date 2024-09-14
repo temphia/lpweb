@@ -13,23 +13,28 @@ func (e *Esuit) StartFileServer() {
 
 	fserver := http.FileServer(http.Dir("./"))
 
-	server := &http.Server{
-		Addr: ":7704",
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// dump req body
+	server := http.NewServeMux()
 
-			out, err := io.ReadAll(r.Body)
-			if err != nil {
-				panic(err)
-			}
+	server.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
+		fserver.ServeHTTP(w, r)
+	})
 
-			pp.Println("@DUMP_REQ_BODY", string(out))
+	server.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			panic("invalid method")
+		}
 
-			fserver.ServeHTTP(w, r)
-		}),
-	}
+		out, err := io.ReadAll(r.Body)
+		if err != nil {
+			panic(err)
+		}
 
-	err := server.ListenAndServe()
+		pp.Println("@UPLOAD_REQ_BODY", string(out))
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("on lads there is nothing to see here"))
+	})
+
+	err := http.ListenAndServe(":7704", server)
 	if err != nil {
 		panic(err)
 	}
