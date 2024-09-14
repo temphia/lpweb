@@ -78,13 +78,14 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 
 			last := false
 			n, err := r.Body.Read(fbuf)
-			if err == io.EOF {
-				log.Println("EOF")
-				last = true
-			}
-
 			if err != nil {
-				panic(err)
+				if err == io.EOF {
+					log.Println("EOF")
+					last = true
+				} else {
+					log.Println("@err/Read", err.Error())
+					panic(err)
+				}
 			}
 
 			ptype := wire.PtypeSendBody
@@ -112,6 +113,7 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 			}
 
 			if last {
+				log.Println("@last/break")
 				break
 			}
 
