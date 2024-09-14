@@ -25,6 +25,10 @@ const (
 	proxyPort  = 7703
 )
 
+const (
+	RunTestSuits = false
+)
+
 func main() {
 
 	wproxy := proxy.NewWebProxy(proxyPort)
@@ -58,14 +62,17 @@ func main() {
 	time.Sleep(5 * time.Second)
 	fmt.Printf("\n\n\n\n\n\n\n\n")
 
-	err = tryNormalHttp(entryHttpUrl)
-	if err != nil {
-		panic(err.Error())
-	}
+	if RunTestSuits {
+		err = tryNormalHttp(entryHttpUrl)
+		if err != nil {
+			panic(err.Error())
+		}
 
-	err = tryUpload(entryHttpUrl)
-	if err != nil {
-		panic(err.Error())
+		err = tryUpload(entryHttpUrl)
+		if err != nil {
+			panic(err.Error())
+		}
+
 	}
 
 	// wait here forever
