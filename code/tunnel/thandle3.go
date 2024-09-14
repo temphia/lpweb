@@ -57,6 +57,7 @@ func (ht *HttpTunnel) streamHandleHttp3(stream network.Stream) {
 	req.URL.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
 	req.URL.Scheme = "http"
 	req.RequestURI = ""
+	req.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
 
 	// fixme => request body proxy / post upload  support
 

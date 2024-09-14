@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core"
-	"github.com/temphia/lpweb/code/core/mesh"
 	"github.com/temphia/lpweb/code/proxy"
 	"github.com/temphia/lpweb/code/tunnel"
 )
@@ -23,7 +23,7 @@ func main() {
 
 	wproxy := proxy.NewWebProxy(0)
 
-	tunnel := tunnel.NewHttpTunnel(0)
+	tunnel := tunnel.NewHttpTunnel(8002)
 
 	suit := &Esuit{
 		tunnel: tunnel,
@@ -45,8 +45,6 @@ func main() {
 	suit.tunnel.Mesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
 	suit.proxy.Mesh.SetAltPeers(suit.tunnel.Mesh.GetSelfPeerAddr())
 
-	tunnel.Mesh.Host.SetStreamHandler(mesh.ProtocolHttp3, suit.Handler)
-
 	pp.Println(string(core.EncodeToSafeString(peerKey)), "@")
 
 	url, err := url.Parse(fmt.Sprintf("http://%s.localhost:8001/", string(core.EncodeToSafeString(peerKey))))
@@ -63,10 +61,19 @@ func main() {
 		panic(err)
 	}
 
-	_, err = http.DefaultClient.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		panic(err)
 	}
+
+	defer resp.Body.Close()
+
+	out, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	pp.Println("@RESPONSE_BODY", string(out))
 
 	// wait here forever
 	select {}
