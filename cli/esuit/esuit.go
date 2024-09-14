@@ -21,8 +21,8 @@ type Esuit struct {
 }
 
 const (
-	tunnelPort = 7704
-	proxyPort  = 7703
+	tunnelPort = 7777
+	proxyPort  = 7704
 )
 
 const (
