@@ -46,7 +46,7 @@ func main() {
 	suit.tunnel.Mesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
 	suit.proxy.Mesh.SetAltPeers(suit.tunnel.Mesh.GetSelfPeerAddr())
 
-	entryHttpUrl := fmt.Sprintf("http://%s.localhost:8001/", string(core.EncodeToSafeString(peerKey)))
+	entryHttpUrl := fmt.Sprintf("http://%s.localhost:7704/", string(core.EncodeToSafeString(peerKey)))
 
 	pp.Println("@serving_in_libp2p", entryHttpUrl)
 
@@ -78,7 +78,8 @@ func main() {
 
 	pp.Println("@RESPONSE_BODY", string(out))
 
-	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader([]byte("hello world")))
+	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader([]byte("hello world"))) //
+
 	if err != nil {
 		panic(err)
 	}
