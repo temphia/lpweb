@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core"
@@ -23,7 +24,7 @@ func main() {
 
 	wproxy := proxy.NewWebProxy(0)
 
-	tunnel := tunnel.NewHttpTunnel(7703)
+	tunnel := tunnel.NewHttpTunnel(7704)
 
 	suit := &Esuit{
 		tunnel: tunnel,
@@ -49,10 +50,13 @@ func main() {
 
 	pp.Println("@serving_in_libp2p", entryHttpUrl)
 
-	err = tryNormalHttp(entryHttpUrl)
-	if err != nil {
-		panic(err.Error())
-	}
+	time.Sleep(5 * time.Second)
+	fmt.Printf("\n\n\n\n\n\n\n\n")
+
+	// err = tryNormalHttp(entryHttpUrl)
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
 
 	err = tryUpload(entryHttpUrl)
 	if err != nil {
@@ -66,10 +70,12 @@ func main() {
 
 func tryNormalHttp(baseURL string) error {
 
-	url, err := url.Parse(fmt.Sprintf("%s/list", baseURL))
+	url, err := url.Parse(fmt.Sprintf("%slist", baseURL))
 	if err != nil {
 		return err
 	}
+
+	pp.Println("@connecting to", url.String())
 
 	req, err := http.NewRequest("GET", url.String(), nil)
 	if err != nil {
@@ -96,12 +102,12 @@ func tryNormalHttp(baseURL string) error {
 
 func tryUpload(baseURL string) error {
 
-	url, err := url.Parse(fmt.Sprintf("%s/upload", baseURL))
+	url, err := url.Parse(fmt.Sprintf("%supload", baseURL))
 	if err != nil {
 		return err
 	}
 
-	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader([]byte("hello world"))) //
+	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader(TestUploadData)) //
 
 	if err != nil {
 		return err

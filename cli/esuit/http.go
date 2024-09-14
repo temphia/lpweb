@@ -14,11 +14,18 @@ func (e *Esuit) StartHttpServer() {
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			pp.Println("@ALL_INTERCEPT", r.URL.String())
+			pp.Println("@ALL_HOST", r.Host)
 
-			// make xyz.localhost.com to xyz.lpweb
+			// make <pubkey>.localhost to xyz.lpweb
 
 			hostParts := strings.Split(r.Host, ".")
-			r.URL.Host = hostParts[0] + ".lpweb"
+			newHostName := hostParts[0] + ".lpweb"
+
+			pp.Println("@new_host_name", hostParts, newHostName)
+
+			r.URL.Host = newHostName
+			r.Host = newHostName
+
 			e.proxy.HandleHttp3(r, w)
 		}),
 	}

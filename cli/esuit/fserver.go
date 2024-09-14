@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -31,7 +32,7 @@ func (e *Esuit) StartFileServer() {
 
 		pp.Println("@UPLOAD_REQ_BODY", string(out))
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("on lads there is nothing to see here"))
+		w.Write([]byte(fmt.Sprintf("uploaded %d bytes \n\n%s", len(out), string(out))))
 	})
 
 	err := http.ListenAndServe(":7704", server)
