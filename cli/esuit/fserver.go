@@ -9,7 +9,7 @@ func (e *Esuit) StartFileServer() {
 	fserver := http.FileServer(http.Dir("./"))
 
 	server := &http.Server{
-		Addr: ":8002",
+		Addr: ":7704",
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			fserver.ServeHTTP(w, r)
 		}),

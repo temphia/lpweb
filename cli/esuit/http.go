@@ -10,7 +10,7 @@ import (
 func (e *Esuit) StartHttpServer() {
 
 	server := &http.Server{
-		Addr: ":8001",
+		Addr: ":7703",
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			pp.Println("@ALL_INTERCEPT", r.URL.String())
