@@ -119,7 +119,7 @@ func tryUpload(baseURL string) error {
 		return err
 	}
 
-	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader(TestUploadData)) //
+	req2, err := http.NewRequest("POST", url.String(), bytes.NewReader(TestUploadData2)) //
 
 	if err != nil {
 		return err
