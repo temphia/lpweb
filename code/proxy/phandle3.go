@@ -136,44 +136,45 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	}
 
 	header := w.Header()
+	if resp.ContentLength > -1 {
+		header.Del("Content-Length")
+	}
 	for k, v := range resp.Header {
 		header[k] = v
 	}
 
 	w.WriteHeader(resp.StatusCode)
 
-	if resp.ContentLength > 0 {
-		offset := int32(0)
+	offset := int32(0)
 
-		pp.Println("RESPONSE_BODY@PROXY/1")
+	pp.Println("RESPONSE_BODY@PROXY/1")
 
-		for {
-			pp.Println("@offset", offset)
+	for {
+		pp.Println("@offset", offset)
 
-			wpack, err := wire.ReadPacket(stream)
-			if err != nil {
-				log.Println("@err/ReadResponse", err.Error())
-				panic(err)
-			}
+		wpack, err := wire.ReadPacket(stream)
+		if err != nil {
+			log.Println("@err/ReadResponse", err.Error())
+			panic(err)
+		}
 
-			if wpack.Offset < offset {
-				panic("invalid offset")
-			}
+		if wpack.Offset < offset {
+			panic("invalid offset")
+		}
 
-			offset = wpack.Offset
+		offset = wpack.Offset
 
-			if wpack.PType != wire.PtypeSendBody &&
-				wpack.PType != wire.PtypeEndBody &&
-				wpack.PType != wire.PtypeReSendBody {
-				pp.Println("HH", int64(wpack.PType))
-				panic("invalid packet type 2")
-			}
+		if wpack.PType != wire.PtypeSendBody &&
+			wpack.PType != wire.PtypeEndBody &&
+			wpack.PType != wire.PtypeReSendBody {
+			pp.Println("HH", int64(wpack.PType))
+			panic("invalid packet type 2")
+		}
 
-			w.Write(wpack.Data)
+		w.Write(wpack.Data)
 
-			if wpack.PType == wire.PtypeEndBody {
-				break
-			}
+		if wpack.PType == wire.PtypeEndBody {
+			break
 		}
 	}
 
