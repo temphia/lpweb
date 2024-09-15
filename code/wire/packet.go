@@ -31,7 +31,7 @@ type Packet struct {
 	Data   []byte
 }
 
-const FragmentSize = 1024 * 256
+const FragmentSize = 1024 * 512
 
 func (p *Packet) String() string {
 	ptype := PtypeMap[p.PType]
