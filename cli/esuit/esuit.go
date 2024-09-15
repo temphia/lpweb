@@ -42,7 +42,7 @@ func main() {
 
 	go suit.StartHttpServer()
 
-	go suit.StartFileServer()
+	//	go suit.StartFileServer()
 
 	peerKey, err := suit.tunnel.Mesh.GetPeerKey().MarshalBinary()
 	if err != nil {
@@ -68,10 +68,10 @@ func main() {
 			panic(err.Error())
 		}
 
-		// err = tryUpload(entryHttpUrl)
-		// if err != nil {
-		// 	panic(err.Error())
-		// }
+		err = tryUpload(entryHttpUrl)
+		if err != nil {
+			panic(err.Error())
+		}
 
 	}
 
