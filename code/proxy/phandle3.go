@@ -217,8 +217,6 @@ func extractHostHash(host string) string {
 		panic(err)
 	}
 
-	pp.Println("@RAW_PEER_KEY", pubkeyDecoded)
-
 	//added := append([]byte{0}, pubkeyDecoded...)
 
 	peerId, err := peer.IDFromBytes(pubkeyDecoded)
