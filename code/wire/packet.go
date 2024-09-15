@@ -15,6 +15,15 @@ const (
 	PtypeReSendBody PacketType = iota
 )
 
+var (
+	PtypeMap = map[PacketType]string{
+		PTypeSendHeader: "SendHeader",
+		PtypeSendBody:   "SendBody",
+		PtypeEndBody:    "EndBody",
+		PtypeReSendBody: "ReSendBody",
+	}
+)
+
 type Packet struct {
 	PType  PacketType
 	Offset int32 // current offset
@@ -25,7 +34,9 @@ type Packet struct {
 const FragmentSize = 1024 * 256
 
 func (p *Packet) String() string {
-	return fmt.Sprintf("Packet{\n\tPType: %d,\n\t Offset: %d,\n\t Total: %d,\n\t Data: SIZE<%d>}", p.PType, p.Offset, p.Total, len(p.Data))
+	ptype := PtypeMap[p.PType]
+
+	return fmt.Sprintf("Packet{\n\tPType: %s,\n\t Offset: %d,\n\t Total: %d,\n\t Data: SIZE<%d>}", ptype, p.Offset, p.Total, len(p.Data))
 }
 
 func GetRequestId() []byte {

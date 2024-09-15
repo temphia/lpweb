@@ -14,6 +14,12 @@ func (e *Esuit) StartHttpServer() {
 		Addr: ":" + strconv.Itoa(proxyPort),
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+			// check if its favicon
+			if strings.Contains(r.URL.Path, "favicon") {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			pp.Println("@ALL_INTERCEPT", r.URL.String())
 			pp.Println("@ALL_HOST", r.Host)
 

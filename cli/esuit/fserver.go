@@ -43,7 +43,7 @@ func (e *Esuit) StartFileServer() {
 		w.Write([]byte(fmt.Sprintf("uploaded %d bytes \n\n%s", len(out), string(out))))
 	})
 
-	port := 4444 //tunnelPort
+	port := tunnelPort
 
 	err := http.ListenAndServe(":"+strconv.Itoa(port), server)
 	if err != nil {

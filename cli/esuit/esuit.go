@@ -21,12 +21,12 @@ type Esuit struct {
 }
 
 const (
-	tunnelPort = 7777
+	tunnelPort = 7703
 	proxyPort  = 7704
 )
 
 const (
-	RunTestSuits = false
+	RunTestSuits = true
 )
 
 func main() {
@@ -68,10 +68,10 @@ func main() {
 			panic(err.Error())
 		}
 
-		err = tryUpload(entryHttpUrl)
-		if err != nil {
-			panic(err.Error())
-		}
+		// err = tryUpload(entryHttpUrl)
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
 
 	}
 
@@ -82,7 +82,7 @@ func main() {
 
 func tryNormalHttp(baseURL string) error {
 
-	url, err := url.Parse(fmt.Sprintf("%slist", baseURL))
+	url, err := url.Parse(fmt.Sprintf("%stext_file", baseURL))
 	if err != nil {
 		return err
 	}
