@@ -18,7 +18,14 @@ func (e *Esuit) StartFileServer() {
 	server := http.NewServeMux()
 
 	server.HandleFunc("/list", func(w http.ResponseWriter, r *http.Request) {
+		pp.Println("@list")
 		fserver.ServeHTTP(w, r)
+	})
+
+	server.HandleFunc("/text_file", func(w http.ResponseWriter, r *http.Request) {
+
+		w.WriteHeader(http.StatusOK)
+		w.Write(TestUploadData2)
 	})
 
 	server.HandleFunc("/upload", func(w http.ResponseWriter, r *http.Request) {
