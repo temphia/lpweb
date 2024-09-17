@@ -47,7 +47,7 @@ func NewUsingMesh(m *mesh.Mesh) *HttpTunnel {
 		log.Println("httpd@tunnel", m.String())
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolHttp3, instance.streamHandleHttp)
+	m.Host.SetStreamHandler(mesh.ProtocolHttp, instance.streamHandleHttp)
 	m.Host.SetStreamHandler(mesh.ProtocolWS, instance.streamHandleWS)
 
 	servHost := fmt.Sprintf("http://%s.lpweb", strings.ToLower(m.Host.ID().String()))

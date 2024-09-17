@@ -40,7 +40,7 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	log.Println("@handleHttp2/new_stream/3", enode.TargetAddr.ID.String())
 	log.Println("addr_len", len(enode.TargetAddr.Addrs))
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolHttp3)
+	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolHttp)
 	if err != nil {
 		log.Println("@err_new_stream", err.Error())
 		w.WriteHeader(http.StatusBadGateway)

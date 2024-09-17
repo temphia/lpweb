@@ -35,8 +35,9 @@ import (
 )
 
 const (
-	ProtocolHttp3 = "/lpweb/http/1.3.0"
-	ProtocolWS    = "/lpweb/ws/1.0.0"
+	ProtocolHttp      = "/lpweb/http/1.0.0"
+	ProtocalHttpReply = "/lpweb/http_reply/1.0.0"
+	ProtocolWS        = "/lpweb/ws/1.0.0"
 )
 
 var (
