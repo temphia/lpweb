@@ -22,7 +22,7 @@ type HttpTunnel struct {
 	rcLock         sync.Mutex
 }
 
-func NewHttpTunnel(port int) *HttpTunnel {
+func New(port int) *HttpTunnel {
 	conf := config.Get()
 
 	m, err := mesh.New(conf.TunnelKey, 0)
@@ -30,17 +30,21 @@ func NewHttpTunnel(port int) *HttpTunnel {
 		panic(err)
 	}
 
-	log.Println("p2p_relay@", m.Host.ID().String())
-	for _, m := range m.Host.Addrs() {
-		log.Println("httpd@tunnel", m.String())
-	}
+	return NewUsingMesh(m)
+}
 
+func NewUsingMesh(m *mesh.Mesh) *HttpTunnel {
 	instance := &HttpTunnel{
 		Mesh:           m,
 		localNode:      m.Host,
-		tunnelToPort:   port,
+		tunnelToPort:   0,
 		activeStramers: make(map[string]*streamer.Streamer),
 		rcLock:         sync.Mutex{},
+	}
+
+	log.Println("p2p_relay@", m.Host.ID().String())
+	for _, m := range m.Host.Addrs() {
+		log.Println("httpd@tunnel", m.String())
 	}
 
 	m.Host.SetStreamHandler(mesh.ProtocolHttp3, instance.streamHandleHttp)
@@ -55,5 +59,4 @@ func NewHttpTunnel(port int) *HttpTunnel {
 func (ht *HttpTunnel) Run() error {
 
 	return nil
-
 }

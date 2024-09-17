@@ -7,10 +7,8 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/elazarl/goproxy"
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/network"
 
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
@@ -20,7 +18,6 @@ import (
 type WebProxy struct {
 	Mesh      *mesh.Mesh
 	localNode host.Host
-	proxy     *goproxy.ProxyHttpServer
 
 	upnodeLock sync.Mutex
 
@@ -30,45 +27,32 @@ type WebProxy struct {
 	reqMLock sync.Mutex
 }
 
-func NewWebProxy(port int) *WebProxy {
+func New(port int) *WebProxy {
 
 	conf := config.Get()
-
-	proxy := goproxy.NewProxyHttpServer()
 
 	m, err := mesh.New(conf.ProxyKey, 0)
 	if err != nil {
 		panic(err)
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolWS, deny)
+	return NewUsingMesh(port, m)
+}
 
-	log.Println("p2p_relay@", m.Host.ID().String())
-	for _, m := range m.Host.Addrs() {
-		log.Println("httpd@proxy", m.String())
-	}
-
+func NewUsingMesh(port int, m *mesh.Mesh) *WebProxy {
 	instance := &WebProxy{
-		Mesh:      m,
-		localNode: m.Host,
-		proxy:     proxy,
-		proxyPort: port,
-		//upNodes:    make(map[string]*UpNode),
+		Mesh:       m,
+		localNode:  m.Host,
+		proxyPort:  0,
 		requests:   make(map[uint32]*streamer.Streamer),
 		reqMLock:   sync.Mutex{},
 		upnodeLock: sync.Mutex{},
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolHttp3, func(s network.Stream) {
-		panic("Not implemented")
-	})
-
 	return instance
 }
 
 func (wp *WebProxy) Run() error {
-
-	wp.proxy.Verbose = true
 
 	addr := fmt.Sprintf(":%d", wp.proxyPort)
 
@@ -95,10 +79,4 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wp.proxy.ServeHTTP(w, r)
-}
-
-func deny(s network.Stream) {
-	pp.Println("proxy won't accept lpweb request, it proxies web reqest to libweb")
-	s.Close()
 }

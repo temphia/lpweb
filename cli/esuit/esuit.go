@@ -31,9 +31,9 @@ const (
 
 func main() {
 
-	wproxy := proxy.NewWebProxy(proxyPort)
+	wproxy := proxy.New(proxyPort)
 
-	tunnel := tunnel.NewHttpTunnel(tunnelPort)
+	tunnel := tunnel.New(tunnelPort)
 
 	suit := &Esuit{
 		tunnel: tunnel,
