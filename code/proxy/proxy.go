@@ -77,7 +77,7 @@ func (wp *WebProxy) Run() error {
 	return http.ListenAndServe(addr, wp)
 }
 
-var hostRegex = regexp.MustCompile(`[A-Za-z0-9]*\.*[A-Za-z0-9]*\.lpweb`)
+var hostRegex = regexp.MustCompile(`^([a-zA-Z0-9-]+)\.localhost`)
 
 func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pp.Println("@ALL_INTERCEPT", r.Method)

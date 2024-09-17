@@ -18,7 +18,7 @@ func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
 	w.Write([]byte("HTTP/1.0 200 Connection established\r\n\r\n"))
 	pp.Println("@accepted_connect")
 
-	enode := wp.getExitNode(hash)
+	enode := wp.getExitNode(hash.PeerId)
 
 	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolWS)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 	"strings"
 
 	"github.com/k0kubun/pp"
@@ -23,7 +24,7 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 
 	log.Println("@new_normal_conn", r.Host)
 
-	enode := wp.getExitNode(hash)
+	enode := wp.getExitNode(hash.PeerId)
 	if enode == nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
@@ -203,11 +204,23 @@ func (wp *WebProxy) getExitNode(target string) *streamer.Streamer {
 	return enode
 }
 
-func extractHostHash(host string) string {
+type PeerHost struct {
+	PeerId string
+	Port   int
+}
+
+func extractHostHash(host string) *PeerHost {
 
 	pubkeyEncoded := strings.Split(host, ".")[0]
+	port := 0
 
 	pp.Println("@extractHostHash", pubkeyEncoded)
+
+	if strings.Contains(pubkeyEncoded, "-") {
+		sllited := strings.Split(pubkeyEncoded, "-")
+		pubkeyEncoded = sllited[0]
+		port, _ = strconv.Atoi(sllited[1])
+	}
 
 	pubkeyDecoded, err := core.DecodeToBytes(pubkeyEncoded)
 	if err != nil {
@@ -223,6 +236,9 @@ func extractHostHash(host string) string {
 
 	pp.Println("@FINAL", peerId.String())
 
-	return peerId.String()
+	return &PeerHost{
+		PeerId: peerId.String(),
+		Port:   port,
+	}
 
 }
