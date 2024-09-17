@@ -180,10 +180,6 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 
 }
 
-func (wp *WebProxy) handleHttpWS(r *http.Request, w http.ResponseWriter) {
-
-}
-
 // utils
 
 func (wp *WebProxy) getExitNode(target string) *streamer.Streamer {

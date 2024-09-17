@@ -85,8 +85,9 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if hostRegex.MatchString(r.Host) {
 		pp.Println("@IPWEB_INTERCEPT", r.Method)
 
-		if r.Method == "CONNECT" {
-			wp.handleHttpWS(r, w)
+		isWs := r.Method == "GET" && r.Header.Get("Upgrade") == "websocket"
+		if r.Method == "CONNECT" || isWs {
+			wp.handleWS(r, w)
 		} else {
 			wp.HandleHttp3(r, w)
 		}
