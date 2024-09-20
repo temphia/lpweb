@@ -36,9 +36,11 @@ func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 		return
 	}
 
-	req.Header.Set("Host", fmt.Sprintf("localhost:%d", ht.tunnelToPort))
+	wsUrl := fmt.Sprintf("ws://localhost:%d%s", ht.tunnelToPort, req.URL.Path)
 
-	c, _, err := websocket.DefaultDialer.Dial(req.URL.String(), req.Header)
+	pp.Println("@streamHandleWS/3", wsUrl)
+
+	c, _, err := websocket.DefaultDialer.Dial(wsUrl, nil)
 	if err != nil {
 		pp.Println("streamHandleWS/dial2:", err)
 		return
