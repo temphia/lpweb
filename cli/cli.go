@@ -42,7 +42,7 @@ func (c *CLI) runWebProxy() {
 		c.WebProxy.Port = 8080
 	}
 
-	wproxy := proxy.NewWebProxy(c.WebProxy.Port)
+	wproxy := proxy.New(c.WebProxy.Port)
 
 	pp.Println("@run", wproxy.Run())
 
@@ -54,7 +54,7 @@ func (c *CLI) runHttpTunnel() {
 		panic("tunnel port is needed")
 	}
 
-	htun := tunnel.NewHttpTunnel(c.HttpTunnel.Port)
+	htun := tunnel.New(c.HttpTunnel.Port, false)
 
 	pp.Println("@run", htun.Run())
 }

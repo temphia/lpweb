@@ -7,68 +7,52 @@ import (
 	"regexp"
 	"sync"
 
-	"github.com/elazarl/goproxy"
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
-	"github.com/temphia/lpweb/code/core/seekers"
-	"github.com/temphia/lpweb/code/core/seekers/etcd"
+	"github.com/temphia/lpweb/code/proxy/streamer"
 )
 
 type WebProxy struct {
-	mesh      *mesh.Mesh
+	Mesh      *mesh.Mesh
 	localNode host.Host
-	proxy     *goproxy.ProxyHttpServer
-	seekers   []seekers.Seeker
 
-	upNodes    map[string]*UpNode
 	upnodeLock sync.Mutex
 
 	proxyPort int
+
+	requests map[uint32]*streamer.Streamer
+	reqMLock sync.Mutex
 }
 
-func NewWebProxy(port int) *WebProxy {
+func New(port int) *WebProxy {
 
 	conf := config.Get()
-
-	proxy := goproxy.NewProxyHttpServer()
 
 	m, err := mesh.New(conf.ProxyKey, 0)
 	if err != nil {
 		panic(err)
 	}
 
-	m.Host.SetStreamHandler(mesh.ProtocolHttp, deny)
-	m.Host.SetStreamHandler(mesh.ProtocolWS, deny)
+	return NewUsingMesh(port, m)
+}
 
-	log.Println("p2p_relay@", m.Host.ID().String())
-	for _, m := range m.Host.Addrs() {
-		log.Println("httpd@", m.String())
-	}
-
-	seeker := etcd.New(conf.UUID)
-
+func NewUsingMesh(port int, m *mesh.Mesh) *WebProxy {
 	instance := &WebProxy{
-		mesh:       m,
+		Mesh:       m,
 		localNode:  m.Host,
-		proxy:      proxy,
-		proxyPort:  port,
-		upNodes:    make(map[string]*UpNode),
+		proxyPort:  0,
+		requests:   make(map[uint32]*streamer.Streamer),
+		reqMLock:   sync.Mutex{},
 		upnodeLock: sync.Mutex{},
-
-		seekers: []seekers.Seeker{
-			seeker,
-		},
 	}
 
 	return instance
 }
 
 func (wp *WebProxy) Run() error {
-
-	wp.proxy.Verbose = true
 
 	addr := fmt.Sprintf(":%d", wp.proxyPort)
 
@@ -77,7 +61,7 @@ func (wp *WebProxy) Run() error {
 	return http.ListenAndServe(addr, wp)
 }
 
-var hostRegex = regexp.MustCompile(`[A-Za-z0-9]*\.*[A-Za-z0-9]*\.lpweb`)
+var hostRegex = regexp.MustCompile(`^([a-zA-Z0-9-]+)\.localhost`)
 
 func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	pp.Println("@ALL_INTERCEPT", r.Method)
@@ -85,14 +69,14 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if hostRegex.MatchString(r.Host) {
 		pp.Println("@IPWEB_INTERCEPT", r.Method)
 
-		if r.Method == "CONNECT" {
-			wp.handleWS(r, w)
+		isWs := r.Method == "GET" && r.Header.Get("Upgrade") == "websocket"
+		if r.Method == "CONNECT" || isWs {
+			wp.HandleWS(r, w)
 		} else {
-			wp.handleHttp(r, w)
+			wp.HandleHttp3(r, w)
 		}
 
 		return
 	}
 
-	wp.proxy.ServeHTTP(w, r)
 }

@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/ipfs/go-datastore"
 	"github.com/k0kubun/pp"
@@ -21,33 +23,37 @@ import (
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 
+	drouting "github.com/libp2p/go-libp2p/p2p/discovery/routing"
+	dutil "github.com/libp2p/go-libp2p/p2p/discovery/util"
+
 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
 	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
 
 	ma "github.com/multiformats/go-multiaddr"
+
+	"github.com/libp2p/go-libp2p/p2p/discovery/mdns"
 )
 
 const (
-	ProtocolHttp = "/lpweb/http/1.0.0"
-	ProtocolWS   = "/lpweb/ws/1.0.0"
+	ProtocolHttp      = "/lpweb/http/1.0.0"
+	ProtocalHttpReply = "/lpweb/http_reply/1.0.0"
+	ProtocolWS        = "/lpweb/ws/1.0.0"
 )
 
 var (
 	BootStrapPeers = []string{
-		"/ip4/139.178.91.71/udp/4001/quic/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-		"/ip4/147.75.87.27/udp/4001/quic/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-		"/ip4/145.40.118.135/udp/4001/quic/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-		"/ip4/104.131.131.82/udp/4001/quic/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
-		"/ip6/2604:1380:4602:5c00::3/tcp/4001/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-		"/ip4/139.178.91.71/tcp/4001/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-		"/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
 
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
-		"/dnsaddr/bootstrap.libp2p.io/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+		"/ip4/147.75.87.27/udp/4001/quic-v1/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+		"/ip6/2604:1380:4602:5c00::3/tcp/4001/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb",
+
+		"/ip4/145.40.118.135/udp/4001/quic-v1/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt",
+
+		"/ip4/139.178.91.71/udp/4001/quic-v1/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+		"/ip4/139.178.91.71/tcp/4001/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN",
+
+		"/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
+		"/ip4/mars.i.ipfs.io/udp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ",
 	}
 )
 
@@ -60,6 +66,14 @@ type Mesh struct {
 	ResourceManager *ResourceManager
 
 	HolePunchService *holepunch.Service
+
+	rendezvousDiscovery *drouting.RoutingDiscovery
+
+	altPeersStore map[string]*peer.AddrInfo
+	altPeersLock  sync.Mutex
+
+	// mdns
+	mdnsDiscovery mdns.Service
 }
 
 func (m *Mesh) PublicMultiAddr() ([]ma.Multiaddr, error) {
@@ -119,14 +133,32 @@ func New(keystr string, port int) (*Mesh, error) {
 
 	host := dh.Host()
 
+	routingDiscovery := drouting.NewRoutingDiscovery(dh)
+
 	mesh := &Mesh{
-		Host:             host,
-		DHT:              dh,
-		Port:             port,
-		PublicIp:         pubIp,
-		ResourceManager:  host.Network().ResourceManager().(*ResourceManager),
-		HolePunchService: hps,
+		Host:                host,
+		DHT:                 dh,
+		Port:                port,
+		PublicIp:            pubIp,
+		ResourceManager:     host.Network().ResourceManager().(*ResourceManager),
+		HolePunchService:    hps,
+		altPeersStore:       make(map[string]*peer.AddrInfo),
+		altPeersLock:        sync.Mutex{},
+		rendezvousDiscovery: routingDiscovery,
 	}
+
+	mdnsvc := mdns.NewMdnsService(mesh.Host, Rendezvous, mesh)
+	mesh.mdnsDiscovery = mdnsvc
+
+	err = mdnsvc.Start()
+	if err != nil {
+		pp.Println("@err_mdns_start", err.Error())
+		return nil, err
+	}
+
+	go mesh.RunControlLoop()
+
+	time.Sleep(time.Second * 2)
 
 	return mesh, nil
 
@@ -156,13 +188,14 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 			addrs[pi.ID] = pi
 		}
 		pi.Addrs = append(pi.Addrs, pii.Addrs...)
+
 	}
 
-	finalAddrs := make([]peer.AddrInfo, 0, len(BootStrapPeers))
+	// finalAddrs := make([]peer.AddrInfo, 0, len(BootStrapPeers))
 
-	for _, addr := range addrs {
-		finalAddrs = append(finalAddrs, *addr)
-	}
+	// for _, addr := range addrs {
+	// 	finalAddrs = append(finalAddrs, *addr)
+	// }
 
 	rm, err := NewResourceManager()
 	if err != nil {
@@ -171,7 +204,7 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 
 	// Create libp2p node
 	node, err := libp2p.New(
-		libp2p.UserAgent("libp2p/alpha1"),
+		libp2p.UserAgent("lpweb"),
 		libp2p.ListenAddrStrings(baseAddrs...),
 		libp2p.Identity(privateKey),
 		libp2p.DefaultSecurity,
@@ -180,17 +213,16 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 		libp2p.Transport(quic.NewTransport),
 		libp2p.EnableRelay(),
 		libp2p.ResourceManager(rm),
-		libp2p.ForceReachabilityPrivate(),
-
-		libp2p.PrivateNetwork(nil),
+		// libp2p.ForceReachabilityPrivate(),
+		// libp2p.PrivateNetwork(nil),
 
 		libp2p.EnableHolePunching(holepunch.WithTracer(&tracer{}), func(s *holepunch.Service) error {
 			hps = s
 			return nil
 		}),
 
-		libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
-		libp2p.FallbackDefaults,
+		// libp2p.EnableAutoRelayWithStaticRelays(finalAddrs),
+		// libp2p.FallbackDefaults,
 	)
 
 	if err != nil {
@@ -198,7 +230,13 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 	}
 
 	// Create DHT Subsystem
-	dhtOut = dht.NewDHTClient(ctx, node, datastore.NewMapDatastore())
+	dhtOut = dht.NewDHT(ctx, node, datastore.NewMapDatastore())
+
+	err = dhtOut.Bootstrap(ctx)
+	if err != nil {
+		pp.Println("@err_bootstrapping_dht", err.Error())
+		return
+	}
 
 	// Let's connect to the bootstrap nodes first. They will tell us about the
 	// other nodes in the network.
@@ -229,6 +267,102 @@ func NewHostWithKey(privateKey crypto.PrivKey, port int, baseAddrs []string) (hp
 	}
 
 	return hps, dhtOut, nil
+}
+
+const (
+	Rendezvous = "@lpweb_temple"
+)
+
+func (m *Mesh) RunControlLoop() {
+
+	ctx := context.Background()
+
+	count := 0
+
+	for {
+		count++
+
+		//		fmt.Println("Announcing ourselves...", m.Host.ID())
+		dutil.Advertise(ctx, m.rendezvousDiscovery, Rendezvous)
+		//		fmt.Println("Successfully announced!")
+
+		//		fmt.Println("Searching for other peers...")
+		peerChan, err := m.rendezvousDiscovery.FindPeers(ctx, Rendezvous)
+		if err == nil {
+
+			fmt.Println("Peer stat:", len(peerChan), len(m.altPeersStore))
+
+			// for k, v := range m.altPeersStore {
+			// 	pp.Println("@alt_peer", m.Host.ID().String(), k, v.String())
+			// }
+
+			for peer := range peerChan {
+				if peer.ID == m.Host.ID() {
+					continue
+				}
+
+				m.altPeersLock.Lock()
+				m.altPeersStore[peer.ID.String()] = &peer
+				m.altPeersLock.Unlock()
+
+			}
+		}
+
+		if count > 4 {
+			time.Sleep(time.Second * 60)
+		} else {
+			time.Sleep(time.Second * 5)
+		}
+
+	}
+
+}
+
+func (m *Mesh) HandlePeerFound(pi peer.AddrInfo) {
+	pp.Println("@peer_found/DHT", pi.ID.String())
+
+	m.altPeersLock.Lock()
+	defer m.altPeersLock.Unlock()
+
+	m.altPeersStore[pi.ID.String()] = &pi
+}
+
+func (m *Mesh) GetAltPeer(peer string) *peer.AddrInfo {
+	m.altPeersLock.Lock()
+	defer m.altPeersLock.Unlock()
+
+	pp.Println("@GetAltPeer")
+
+	return m.altPeersStore[peer]
+}
+
+func (m *Mesh) SetAltPeers(pi *peer.AddrInfo) {
+	m.altPeersLock.Lock()
+	defer m.altPeersLock.Unlock()
+
+	m.altPeersStore[pi.ID.String()] = pi
+
+}
+
+func (m *Mesh) PrintListeningAddrs() {
+	for _, m := range m.Host.Addrs() {
+		log.Println("@listening", m.String())
+	}
+}
+
+func (m *Mesh) GetSelfPeerAddr() *peer.AddrInfo {
+	return &peer.AddrInfo{
+		ID:    m.Host.ID(),
+		Addrs: m.Host.Addrs(),
+	}
+}
+
+func (m *Mesh) GetPeerKey() peer.ID {
+	return m.Host.ID()
+}
+
+func (m *Mesh) GetPossiblePeers() []peer.ID {
+	return m.Host.Peerstore().Peers()
 }
 
 func getFreePort() (int, error) {
@@ -262,6 +396,6 @@ func findPublicIpAddr() (string, error) {
 type tracer struct{}
 
 func (t *tracer) Trace(evt *holepunch.Event) {
-	pp.Println("TRACER|>", evt.Peer.Loggable())
-	pp.Println("TRACER|>", evt)
+	// pp.Println("TRACER|>", evt.Peer.Loggable())
+	// pp.Println("TRACER|>", evt)
 }
