@@ -9,7 +9,7 @@ import (
 	"github.com/temphia/lpweb/code/core/mesh"
 )
 
-func (wp *WebProxy) handleWS(r *http.Request, w http.ResponseWriter) {
+func (wp *WebProxy) HandleWS(r *http.Request, w http.ResponseWriter) {
 	hash := extractHostHash(r.Host)
 	pp.Println("@new_ws_conn", r.URL)
 

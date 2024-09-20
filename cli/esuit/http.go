@@ -33,7 +33,11 @@ func (e *Esuit) StartHttpServer() {
 			r.URL.Host = newHostName
 			r.Host = newHostName
 
-			e.proxy.HandleHttp3(r, w)
+			if r.Header.Get("Upgrade") == "websocket" {
+				e.proxy.HandleWS(r, w)
+			} else {
+				e.proxy.HandleHttp3(r, w)
+			}
 		}),
 	}
 

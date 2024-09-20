@@ -71,7 +71,7 @@ func (wp *WebProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		isWs := r.Method == "GET" && r.Header.Get("Upgrade") == "websocket"
 		if r.Method == "CONNECT" || isWs {
-			wp.handleWS(r, w)
+			wp.HandleWS(r, w)
 		} else {
 			wp.HandleHttp3(r, w)
 		}
