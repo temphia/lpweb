@@ -54,7 +54,10 @@ func main() {
 	}
 
 	pp.Println("@SERVER_PEER_KEY", suit.tunnel.Mesh.GetPeerKey().String())
+	suit.tunnel.Mesh.PrintListeningAddrs()
+
 	pp.Println("@CLIENT_PEER_KEY", suit.proxy.Mesh.GetPeerKey().String())
+	suit.proxy.Mesh.PrintListeningAddrs()
 
 	suit.tunnel.Mesh.SetAltPeers(suit.proxy.Mesh.GetSelfPeerAddr())
 	suit.proxy.Mesh.SetAltPeers(suit.tunnel.Mesh.GetSelfPeerAddr())

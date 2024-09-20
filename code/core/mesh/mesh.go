@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -341,6 +342,12 @@ func (m *Mesh) SetAltPeers(pi *peer.AddrInfo) {
 
 	m.altPeersStore[pi.ID.String()] = pi
 
+}
+
+func (m *Mesh) PrintListeningAddrs() {
+	for _, m := range m.Host.Addrs() {
+		log.Println("@listening", m.String())
+	}
 }
 
 func (m *Mesh) GetSelfPeerAddr() *peer.AddrInfo {

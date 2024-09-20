@@ -1,12 +1,8 @@
 package tunnel
 
 import (
-	"fmt"
-	"log"
-	"strings"
 	"sync"
 
-	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/temphia/lpweb/code/core/config"
 	"github.com/temphia/lpweb/code/core/mesh"
@@ -43,16 +39,8 @@ func NewUsingMesh(port int, m *mesh.Mesh, anyPort bool) *HttpTunnel {
 		rcLock:         sync.Mutex{},
 	}
 
-	log.Println("p2p_relay@", m.Host.ID().String())
-	for _, m := range m.Host.Addrs() {
-		log.Println("httpd@tunnel", m.String())
-	}
-
 	m.Host.SetStreamHandler(mesh.ProtocolHttp, instance.streamHandleHttp)
 	m.Host.SetStreamHandler(mesh.ProtocolWS, instance.streamHandleWS)
-
-	servHost := fmt.Sprintf("http://%s.lpweb", strings.ToLower(m.Host.ID().String()))
-	pp.Println("@serving_in_libp2p", servHost)
 
 	return instance
 }
