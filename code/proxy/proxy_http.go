@@ -26,8 +26,8 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 
 	log.Println("@new_normal_conn", r.Host)
 
-	enode := wp.getExitNode(hash.PeerId)
-	if enode == nil {
+	streamer := wp.getExitNode(hash.PeerId)
+	if streamer == nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
@@ -45,10 +45,10 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 		panic(err)
 	}
 
-	log.Println("@handleHttp2/new_stream/3", enode.TargetAddr.ID.String())
-	log.Println("addr_len", len(enode.TargetAddr.Addrs))
+	log.Println("@handleHttp2/new_stream/3", streamer.TargetAddr.ID.String())
+	log.Println("addr_len", len(streamer.TargetAddr.Addrs))
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolHttp)
+	stream, err := wp.localNode.NewStream(context.TODO(), streamer.TargetAddr.ID, mesh.ProtocolHttp)
 	if err != nil {
 		log.Println("@err_new_stream", err.Error())
 		w.WriteHeader(http.StatusBadGateway)
@@ -57,9 +57,9 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 
 	id := wire.GetRequestId()
 
-	enode.RequestId = id
-	enode.ActiveStream = stream
-	enode.Context = context.TODO()
+	streamer.RequestId = id
+	streamer.ActiveStream = stream
+	streamer.Context = context.TODO()
 
 	_, err = stream.Write(id)
 	if err != nil {
@@ -199,7 +199,7 @@ func (wp *WebProxy) getExitNode(target string) *streamer.Streamer {
 		return nil
 	}
 
-	enode := &streamer.Streamer{
+	s := &streamer.Streamer{
 		LocalNode:    wp.localNode,
 		TargetAddr:   *addr,
 		Context:      context.Background(),
@@ -209,7 +209,7 @@ func (wp *WebProxy) getExitNode(target string) *streamer.Streamer {
 		OutData:      nil,
 	}
 
-	return enode
+	return s
 }
 
 type PeerHost struct {

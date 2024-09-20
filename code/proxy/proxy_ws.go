@@ -19,9 +19,9 @@ func (wp *WebProxy) HandleWS(r *http.Request, w http.ResponseWriter) {
 
 	pp.Println("@HandleWS/1", hash)
 
-	enode := wp.getExitNode(hash.PeerId)
+	streamer := wp.getExitNode(hash.PeerId)
 
-	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolWS)
+	stream, err := wp.localNode.NewStream(context.TODO(), streamer.TargetAddr.ID, mesh.ProtocolWS)
 	if err != nil {
 		pp.Println("@HandleWS/2", err.Error())
 		return
