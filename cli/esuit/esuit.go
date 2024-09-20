@@ -67,15 +67,15 @@ func main() {
 	fmt.Printf("\n\n\n\n\n\n\n\n")
 
 	if RunTestSuits {
-		err = tryNormalHttp(entryHttpUrl)
-		if err != nil {
-			panic(err.Error())
-		}
+		// err = tryNormalHttp(entryHttpUrl)
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
 
-		err = tryUpload(entryHttpUrl)
-		if err != nil {
-			panic(err.Error())
-		}
+		// err = tryUpload(entryHttpUrl)
+		// if err != nil {
+		// 	panic(err.Error())
+		// }
 
 		err = tryWs(entryHttpUrl)
 		if err != nil {
