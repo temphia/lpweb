@@ -180,7 +180,17 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 			panic("invalid packet type 2")
 		}
 
-		w.Write(wpack.Data)
+		for {
+			n, err := w.Write(wpack.Data)
+			if err != nil {
+				pp.Println("@err/Write", err.Error())
+				break
+			}
+			wpack.Data = wpack.Data[n:]
+			if len(wpack.Data) == 0 {
+				break
+			}
+		}
 
 		if wpack.PType == wire.PtypeEndBody {
 			break
