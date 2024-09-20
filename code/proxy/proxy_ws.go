@@ -2,8 +2,10 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 
 	"github.com/gorilla/websocket"
 	"github.com/k0kubun/pp"
@@ -15,9 +17,13 @@ var upgrader = websocket.Upgrader{}
 
 func (wp *WebProxy) HandleWS(r *http.Request, w http.ResponseWriter) {
 	hash := extractHostHash(r.Host)
-	pp.Println("@new_ws_conn", r.URL)
+	pp.Println("@new_ws_conn", r.URL.String())
 
 	pp.Println("@HandleWS/1", hash)
+
+	r.URL.Host = fmt.Sprintf("localhost:%d", hash.Port)
+	u2, _ := url.Parse(r.URL.String())
+	r.URL = u2
 
 	streamer := wp.getExitNode(hash.PeerId)
 
