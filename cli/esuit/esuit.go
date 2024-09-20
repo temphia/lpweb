@@ -67,15 +67,15 @@ func main() {
 	fmt.Printf("\n\n\n\n\n\n\n\n")
 
 	if RunTestSuits {
-		// err = tryNormalHttp(entryHttpUrl)
-		// if err != nil {
-		// 	panic(err.Error())
-		// }
+		err = tryNormalHttp(entryHttpUrl)
+		if err != nil {
+			panic(err.Error())
+		}
 
-		// err = tryUpload(entryHttpUrl)
-		// if err != nil {
-		// 	panic(err.Error())
-		// }
+		err = tryUpload(entryHttpUrl)
+		if err != nil {
+			panic(err.Error())
+		}
 
 		err = tryWs(entryHttpUrl)
 		if err != nil {
@@ -183,7 +183,7 @@ func tryWs(baseURL string) error {
 		}
 	}()
 
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
 	for {
@@ -191,7 +191,7 @@ func tryWs(baseURL string) error {
 		case <-done:
 			return nil
 		case t := <-ticker.C:
-			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+			err := c.WriteMessage(websocket.TextMessage, []byte(`hello `+t.String()))
 			if err != nil {
 				log.Println("write:", err)
 				return err

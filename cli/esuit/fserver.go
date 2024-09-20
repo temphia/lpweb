@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -167,6 +168,12 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		pp.Println("@readPump/1", string(message))
+
+		if strings.HasPrefix(string(message), "hello") {
+			message[0] = 'g'
+		}
+
 		c.hub.broadcast <- message
 	}
 }
