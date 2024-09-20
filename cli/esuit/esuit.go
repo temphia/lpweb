@@ -165,7 +165,7 @@ func tryWs(baseURL string) error {
 
 	c, _, err := websocket.DefaultDialer.Dial(url.String(), nil)
 	if err != nil {
-		log.Fatal("dial:", err)
+		log.Fatal("dial1:", err)
 	}
 	defer c.Close()
 

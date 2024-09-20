@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"net/http/httputil"
 
@@ -18,26 +17,29 @@ func (wp *WebProxy) HandleWS(r *http.Request, w http.ResponseWriter) {
 	hash := extractHostHash(r.Host)
 	pp.Println("@new_ws_conn", r.URL)
 
-	pp.Println(hash)
+	pp.Println("@HandleWS/1", hash)
 
 	enode := wp.getExitNode(hash.PeerId)
 
 	stream, err := wp.localNode.NewStream(context.TODO(), enode.TargetAddr.ID, mesh.ProtocolWS)
 	if err != nil {
-		panic(err)
+		pp.Println("@HandleWS/2", err.Error())
+		return
 	}
 	defer stream.Close()
 
 	out, err := httputil.DumpRequest(r, false)
 	if err != nil {
-		panic(err)
+		pp.Println("@HandleWS/3", err.Error())
+		return
 	}
 
 	reqid := wire.GetRequestId()
 
 	_, err = stream.Write(reqid)
 	if err != nil {
-		panic(err)
+		pp.Println("@HandleWS/4", err.Error())
+		return
 	}
 
 	err = wire.WritePacket(stream, &wire.Packet{
@@ -47,14 +49,15 @@ func (wp *WebProxy) HandleWS(r *http.Request, w http.ResponseWriter) {
 		Data:   out,
 	})
 	if err != nil {
-		panic(err)
+		pp.Println("@HandleWS/5", err.Error())
+		return
 	}
 
-	pp.Println("@opened_new_stream")
+	pp.Println("@HandleWS/6")
 
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Print("upgrade:", err)
+		pp.Println("HandleWS/upgrade/7", err)
 		return
 	}
 
@@ -62,41 +65,59 @@ func (wp *WebProxy) HandleWS(r *http.Request, w http.ResponseWriter) {
 
 	go func() {
 
+		pp.Println("HandleWS/go/8")
+
 		readBuf := make([]byte, 1024)
 
 		for {
 			message, err := stream.Read(readBuf)
 			if err != nil {
-				log.Println("read:", err)
+				pp.Println("HandleWS/go/9", err.Error())
 				break
 			}
+
+			pp.Println("HandleWS/go/10")
 
 			err = c.WriteMessage(websocket.TextMessage, readBuf[:message])
 			if err != nil {
-				log.Println("write:", err)
+				pp.Println("HandleWS/go/11", err.Error())
 				break
 			}
+			pp.Println("HandleWS/go/12")
 		}
+
+		pp.Println("HandleWS/go/13")
 
 	}()
 
+	pp.Println("HandleWS/go/14")
+
 	for {
+
+		pp.Println("HandleWS/go/15")
+
 		_, message, err := c.ReadMessage()
 		if err != nil {
-			log.Println("read:", err)
+			pp.Println("HandleWS/go/16", err.Error())
 			break
 		}
 
 		for {
+			pp.Println("HandleWS/go/17")
 			if len(message) == 0 {
+				pp.Println("HandleWS/go/18")
 				break
 			}
+			pp.Println("HandleWS/go/19")
 
 			n, err := stream.Write(message)
 			if err != nil {
-				log.Println("write:", err)
+				pp.Println("HandleWS/go/20", err.Error())
 				break
 			}
+
+			pp.Println("HandleWS/go/21")
+
 			message = message[n:]
 		}
 

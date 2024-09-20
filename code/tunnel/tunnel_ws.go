@@ -1,34 +1,90 @@
 package tunnel
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
-	"io"
-	"net"
+	"net/http"
 
+	"github.com/gorilla/websocket"
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
+	"github.com/temphia/lpweb/code/wire"
 )
 
 func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 	defer stream.Close()
 
-	tcpServer, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("localhost:%d", ht.tunnelToPort))
+	reqId := make([]byte, 16)
+
+	_, err := stream.Read(reqId)
 	if err != nil {
-		panic(err)
+		pp.Println("@streamHandleWS/1", err.Error())
+		return
 	}
 
-	tconn, err := net.DialTCP("tcp", nil, tcpServer)
+	packet, err := wire.ReadPacket(stream)
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 
-	pp.Println("@after_dial")
+	reader := bytes.NewBuffer(packet.Data)
+
+	req, err := http.ReadRequest(bufio.NewReader(reader))
+	if err != nil {
+		pp.Println("@streamHandleWS/2", err.Error())
+		return
+	}
+
+	req.Header.Set("Host", fmt.Sprintf("localhost:%d", ht.tunnelToPort))
+
+	c, _, err := websocket.DefaultDialer.Dial(req.URL.String(), req.Header)
+	if err != nil {
+		pp.Println("streamHandleWS/dial2:", err)
+		return
+	}
+
+	defer c.Close()
 
 	go func() {
-		pp.Println("@copy1")
-		pp.Println(io.Copy(tconn, stream))
+
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				pp.Println("streamHandleWS/read1:", err)
+				return
+			}
+
+			for {
+				if len(message) == 0 {
+					break
+				}
+
+				n, err := stream.Write(message)
+				if err != nil {
+					pp.Println("streamHandleWS/write1:", err)
+					return
+				}
+
+				message = message[n:]
+			}
+
+		}
 	}()
 
-	pp.Println("@copy2")
-	pp.Println(io.Copy(stream, tconn))
+	streamBuf := make([]byte, 1024)
+
+	for {
+		n, err := stream.Read(streamBuf)
+		if err != nil {
+			pp.Println("streamHandleWS/read2:", err)
+			break
+		}
+		err = c.WriteMessage(websocket.TextMessage, streamBuf[:n])
+		if err != nil {
+			pp.Println("streamHandleWS/write2:", err)
+			break
+		}
+	}
+
 }
