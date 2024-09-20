@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/k0kubun/pp"
 	"github.com/temphia/lpweb/code/core"
 	"github.com/temphia/lpweb/code/proxy"
@@ -42,7 +44,9 @@ func main() {
 
 	go suit.StartHttpServer()
 
-	//	go suit.StartFileServer()
+	if RunTestSuits {
+		go suit.StartFileServer()
+	}
 
 	peerKey, err := suit.tunnel.Mesh.GetPeerKey().MarshalBinary()
 	if err != nil {
@@ -69,6 +73,11 @@ func main() {
 		}
 
 		err = tryUpload(entryHttpUrl)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		err = tryWs(entryHttpUrl)
 		if err != nil {
 			panic(err.Error())
 		}
@@ -140,5 +149,55 @@ func tryUpload(baseURL string) error {
 	fmt.Println(string(out2))
 
 	return nil
+
+}
+
+func tryWs(baseURL string) error {
+
+	url, err := url.Parse(fmt.Sprintf("%sws", baseURL))
+	if err != nil {
+		return err
+	}
+
+	url.Scheme = "ws"
+
+	log.Printf("connecting to %s", url.String())
+
+	c, _, err := websocket.DefaultDialer.Dial(url.String(), nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer c.Close()
+
+	done := make(chan struct{})
+
+	go func() {
+		defer close(done)
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Println("read:", err)
+				return
+			}
+			log.Printf("recv: %s", message)
+		}
+	}()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return nil
+		case t := <-ticker.C:
+			err := c.WriteMessage(websocket.TextMessage, []byte(t.String()))
+			if err != nil {
+				log.Println("write:", err)
+				return err
+			}
+
+		}
+	}
 
 }

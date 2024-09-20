@@ -30,14 +30,14 @@ func New(port int) *HttpTunnel {
 		panic(err)
 	}
 
-	return NewUsingMesh(m)
+	return NewUsingMesh(port, m)
 }
 
-func NewUsingMesh(m *mesh.Mesh) *HttpTunnel {
+func NewUsingMesh(port int, m *mesh.Mesh) *HttpTunnel {
 	instance := &HttpTunnel{
 		Mesh:           m,
 		localNode:      m.Host,
-		tunnelToPort:   0,
+		tunnelToPort:   port,
 		activeStramers: make(map[string]*streamer.Streamer),
 		rcLock:         sync.Mutex{},
 	}
