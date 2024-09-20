@@ -54,7 +54,7 @@ func (c *CLI) runHttpTunnel() {
 		panic("tunnel port is needed")
 	}
 
-	htun := tunnel.New(c.HttpTunnel.Port)
+	htun := tunnel.New(c.HttpTunnel.Port, false)
 
 	pp.Println("@run", htun.Run())
 }

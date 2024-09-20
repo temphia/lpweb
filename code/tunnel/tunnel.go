@@ -14,15 +14,16 @@ import (
 )
 
 type HttpTunnel struct {
-	Mesh         *mesh.Mesh
-	tunnelToPort int
-	localNode    host.Host
+	Mesh          *mesh.Mesh
+	tunnelToPort  int
+	localNode     host.Host
+	tunnelAnyPort bool
 
 	activeStramers map[string]*streamer.Streamer
 	rcLock         sync.Mutex
 }
 
-func New(port int) *HttpTunnel {
+func New(port int, anyPort bool) *HttpTunnel {
 	conf := config.Get()
 
 	m, err := mesh.New(conf.TunnelKey, 0)
@@ -30,10 +31,10 @@ func New(port int) *HttpTunnel {
 		panic(err)
 	}
 
-	return NewUsingMesh(port, m)
+	return NewUsingMesh(port, m, anyPort)
 }
 
-func NewUsingMesh(port int, m *mesh.Mesh) *HttpTunnel {
+func NewUsingMesh(port int, m *mesh.Mesh, anyPort bool) *HttpTunnel {
 	instance := &HttpTunnel{
 		Mesh:           m,
 		localNode:      m.Host,

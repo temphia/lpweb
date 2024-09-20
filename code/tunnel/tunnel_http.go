@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
+	"strconv"
 
 	"github.com/k0kubun/pp"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -52,7 +54,9 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 		panic(err)
 	}
 
-	req.URL.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
+	port := ht.GetTunnelPort(req.URL.String())
+
+	req.URL.Host = fmt.Sprintf("localhost:%s", port)
 	req.URL.Scheme = "http"
 	req.RequestURI = ""
 	req.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
@@ -139,4 +143,21 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 
 	}
 
+}
+
+func (ht *HttpTunnel) GetTunnelPort(u string) string {
+	port := strconv.Itoa(ht.tunnelToPort)
+
+	if ht.tunnelAnyPort {
+		u, err := url.Parse(u)
+		if err != nil {
+			panic(err)
+		}
+
+		if u.Port() != "0" || u.Port() == "" {
+			port = u.Port()
+		}
+	}
+
+	return port
 }

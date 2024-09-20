@@ -36,7 +36,9 @@ func (ht *HttpTunnel) streamHandleWS(stream network.Stream) {
 		return
 	}
 
-	wsUrl := fmt.Sprintf("ws://localhost:%d%s", ht.tunnelToPort, req.URL.Path)
+	port := ht.GetTunnelPort(req.URL.String())
+
+	wsUrl := fmt.Sprintf("ws://localhost:%s%s", port, req.URL.Path)
 
 	pp.Println("@streamHandleWS/3", wsUrl)
 

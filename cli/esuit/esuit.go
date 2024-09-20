@@ -35,7 +35,7 @@ func main() {
 
 	wproxy := proxy.New(proxyPort)
 
-	tunnel := tunnel.New(tunnelPort)
+	tunnel := tunnel.New(tunnelPort, false)
 
 	suit := &Esuit{
 		tunnel: tunnel,

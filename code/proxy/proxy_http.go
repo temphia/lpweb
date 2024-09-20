@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -31,6 +33,12 @@ func (wp *WebProxy) HandleHttp3(r *http.Request, w http.ResponseWriter) {
 	}
 
 	log.Println("@handleHttp2/dump_request/1")
+
+	r.URL.Host = fmt.Sprintf("localhost:%d", hash.Port)
+	u2, _ := url.Parse(r.URL.String())
+	r.URL = u2
+
+	r.Header.Set("Host", fmt.Sprintf("localhost:%d", hash.Port))
 
 	out, err := httputil.DumpRequest(r, false)
 	if err != nil {
