@@ -38,10 +38,19 @@ func New(opts *Options) *EmbedLPWebNode {
 
 // control loop
 
-func (e *EmbedLPWebNode) Run() {
+func (e *EmbedLPWebNode) Run() error {
 
-	go e.tunnel.Run()
-	go e.proxy.Run()
+	err := e.tunnel.Run()
+	if err != nil {
+		return err
+	}
+
+	err = e.proxy.Run()
+	if err != nil {
+		return err
+	}
 
 	// e.mesh.RunControlLoop()
+
+	return nil
 }
