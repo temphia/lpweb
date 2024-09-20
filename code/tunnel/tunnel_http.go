@@ -57,8 +57,6 @@ func (ht *HttpTunnel) streamHandleHttp(stream network.Stream) {
 	req.RequestURI = ""
 	req.Host = fmt.Sprintf("localhost:%d", ht.tunnelToPort)
 
-	// fixme => request body proxy / post upload  support
-
 	if req.ContentLength > 0 {
 		req.Body = &proxyReader{
 			stream:           stream,
